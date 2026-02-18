@@ -45,10 +45,15 @@ void setup() {
         return;
     }
 
-    // 2. Configura Wi-Fi como Access Point
+    // 2. Configura Wi-Fi como Access Point com IP Fixo
+    IPAddress local_IP(192, 168, 4, 1);
+    IPAddress gateway(192, 168, 4, 1);
+    IPAddress subnet(255, 255, 255, 0);
+
+    WiFi.softAPConfig(local_IP, gateway, subnet);
     WiFi.softAP(ssid, password);
     Serial.println("Wi-Fi Iniciado: " + String(ssid));
-    Serial.print("IP para o navegador: ");
+    Serial.print("IP Fixo para o navegador: ");
     Serial.println(WiFi.softAPIP());
 
     // 3. Configura WebSocket
