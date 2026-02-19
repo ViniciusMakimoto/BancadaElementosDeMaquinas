@@ -2,9 +2,8 @@
 import os
 import htmlmin
 import rjsmin as jsmin
+import gzip
 from rcssmin import cssmin
-
-#TODO: Compactar o código para .gz
 
 # --- Configuração ---
 # Arquivos de origem na pasta 'web'
@@ -12,8 +11,8 @@ HTML_IN = "web/index.html"
 CSS_IN = "web/style.css"
 JS_IN = "web/script.js"
 
-# Arquivo de saída na pasta 'data' para o ESP32
-HTML_OUT = "data/index.html"
+# Arquivo de saída na pasta 'data' para o ESP32 (agora comprimido)
+HTML_OUT = "data/index.html.gz"
 
 # --- Leitura dos Conteúdos ---
 print("Lendo arquivos de origem da pasta 'web'...")
@@ -71,14 +70,23 @@ print("Minificando HTML final...")
 final_html = htmlmin.minify(html_content, remove_comments=True, remove_empty_space=True)
 print(" -> HTML minificado.")
 
+# --- Compressão Gzip ---
+print("Comprimindo o arquivo HTML final...")
+try:
+    compressed_html = gzip.compress(final_html.encode('utf-8'))
+    print(" -> HTML comprimido com Gzip.")
+except Exception as e:
+    print(f"ERRO: Falha ao comprimir o arquivo - {e}")
+    exit(1)
+
 # --- Escrita do Arquivo Final ---
 print(f"Escrevendo arquivo final para o ESP32 em {HTML_OUT}...")
 try:
-    with open(HTML_OUT, 'w', encoding='utf-8') as f:
-        f.write(final_html)
+    with open(HTML_OUT, 'wb') as f:
+        f.write(compressed_html)
     print("\nSUCESSO!")
     print(f"Arquivo '{HTML_OUT}' foi gerado e está pronto para o upload no ESP32.")
-    print("A pasta 'data' agora contém o 'index.html' final e a pasta 'lib' do Chart.js.")
+    print("A pasta 'data' agora contém o 'index.html.gz' final e a pasta 'lib' do Chart.js.")
     print("A pasta 'web' com os arquivos de desenvolvimento não será enviada ao dispositivo.")
 except IOError as e:
     print(f"ERRO: Não foi possível escrever o arquivo de saída - {e}")
