@@ -1,9 +1,22 @@
 {
-    "python-envs.pythonProjects": [
-        {
-            "path": "",
-            "envManager": "ms-python.python:venv",
-            "packageManager": "ms-python.python:pip"
-        }
-    ]
+  "python-envs.pythonProjects": [
+    {
+      "path": "",
+      "envManager": "ms-python.python:venv",
+      "packageManager": "ms-python.python:pip"
+    }
+  ],
+  "editor.formatOnSave": true,
+  // --- WEB (Prettier) ---
+  "[html]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[css]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[json]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+
+  // --- PYTHON (Black) ---
+  //"[python]": { "editor.defaultFormatter": "ms-python.black-formatter" },
+
+  // --- ARDUINO/C++/PLATFORM.IO (C/C++ Tools) ---
+  "[cpp]": { "editor.defaultFormatter": "ms-vscode.cpptools" },
+  "[c]": { "editor.defaultFormatter": "ms-vscode.cpptools" }
 }

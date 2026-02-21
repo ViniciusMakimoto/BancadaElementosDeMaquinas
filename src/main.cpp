@@ -1,89 +1,61 @@
 #include <Arduino.h>
-#include <WiFi.h>
-#include <ESPAsyncWebServer.h>
-#include <LittleFS.h>
-#include <ArduinoJson.h>
+#include "Config.h"
+#include "FileSystemWrapper.h"
+#include "WebServerManager.h"
+// #include "WegInverter.h"
+// #include "RpmSensor.h"
 
-// Configurações do Access Point
-const char* ssid = "Bancada_TCC_Vinicius";
-const char* password = "12345678";
+// --- Instanciação dos Objetos ---
+WebServerManager webManager;
+// WegInverter inversor(MODBUS_SLAVE_ID);
 
-// Objetos do Servidor
-AsyncWebServer server(80);
-AsyncWebSocket ws("/ws");
+// Sensores (Exemplo para 1 sensor, replicar para os outros)
+// RpmSensor sensor1(PIN_RPM_1);
 
-// Variáveis para simulação de dados
-unsigned long lastUpdateTime = 0;
-const long interval = 200; // Envia dados a cada 200ms
+// Wrapper de interrupção (necessário para attachInterrupt funcionar com classes)
+// void IRAM_ATTR isrSensor1()
+// {
+//     sensor1.handleInterrupt();
+// }
 
-// Função que trata mensagens recebidas via WebSocket (Comandos da Web)
-void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type,
-             void *arg, uint8_t *data, size_t len) {
-    if (type == WS_EVT_DATA) {
-        StaticJsonDocument<200> doc;
-        DeserializationError error = deserializeJson(doc, (char*)data);
-        if (!error) {
-            if (doc.containsKey("action")) {
-                String action = doc["action"];
-                Serial.println("Comando Inversor: " + action);
-                // Aqui você inserirá a lógica Modbus posteriormente
-            }
-            if (doc.containsKey("freq")) {
-                int freq = doc["freq"];
-                Serial.printf("Nova Frequência: %d Hz\n", freq);
-            }
-        }
-    }
-}
-
-void setup() {
+void setup()
+{
     Serial.begin(115200);
 
-    // 1. Inicializa Sistema de Arquivos
-    if (!LittleFS.begin()) {
-        Serial.println("Erro ao montar LittleFS");
-        return;
+    // 1. Inicializa Sistema de Arquivos (Wrapper)
+    if (!FileSystemWrapper::begin())
+    {
+        Serial.println("Falha crítica no FS. Sistema pode ficar instável.");
     }
 
-    // 2. Configura Wi-Fi como Access Point com IP Fixo
-    IPAddress local_IP(192, 168, 4, 1);
-    IPAddress gateway(192, 168, 4, 1);
-    IPAddress subnet(255, 255, 255, 0);
+    // Configura a API antes de iniciar o servidor
+    webManager.configureApi(
+        // Callback para GET /api/data (Retorna JSON)
+        []() -> String
+        {
+            // Aqui você montará o JSON real com ArduinoJson
+            // Exemplo simplificado:
+            return {}; //"{\"rpm1\": " + String(sensor1.getRPM()) + ", \"status\": \"OK\"}";
+        },
+        // Callback para POST /api/command (Recebe JSON)
+        [](String body)
+        {
+            Serial.println("[API] Comando recebido: " + body);
+            // Aqui você fará o parse do JSON e chamará inversor.setFrequency(), etc.
+        });
 
-    WiFi.softAPConfig(local_IP, gateway, subnet);
-    WiFi.softAP(ssid, password);
-    Serial.println("Wi-Fi Iniciado: " + String(ssid));
-    Serial.print("IP Fixo para o navegador: ");
-    Serial.println(WiFi.softAPIP());
+    // 2. Inicializa Web Server e Wi-Fi
+    webManager.begin();
 
-    // 3. Configura WebSocket
-    ws.onEvent(onEvent);
-    server.addHandler(&ws);
+    // 3. Inicializa Inversor
+    // inversor.begin(PIN_RS485_RX, PIN_RS485_TX);
 
-    // 4. Serve os arquivos estáticos (HTML, CSS, JS)
-    server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
-
-    // 5. Inicia o servidor
-    server.begin();
+    // 4. Inicializa Sensores e Interrupções
+    // sensor1.begin();
+    // attachInterrupt(digitalPinToInterrupt(PIN_RPM_1), isrSensor1, RISING);
 }
 
-void loop() {
-    // Limpeza de conexões mortas do WebSocket
-    ws.cleanupClients();
-
-    // Envia dados simulados para a Web periodicamente
-    if (millis() - lastUpdateTime > interval) {
-        StaticJsonDocument<200> sensorData;
-        sensorData["rpm1"] = random(1150, 1250);
-        sensorData["rpm2"] = random(800, 850);
-        sensorData["rpm3"] = random(500, 550);
-        sensorData["rpm4"] = random(300, 350);
-        sensorData["vib"] = (float)random(5, 20) / 10.0;
-
-        String jsonResponse;
-        serializeJson(sensorData, jsonResponse);
-        ws.textAll(jsonResponse); // Dispara para todos os navegadores conectados
-
-        lastUpdateTime = millis();
-    }
+void loop()
+{
+    // O loop agora está livre de tarefas de rede (exceto o que roda em background no AsyncWebServer)
 }
