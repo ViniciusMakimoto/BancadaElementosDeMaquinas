@@ -7,6 +7,8 @@ let targetRPM = 0;
 let inverterOn = false;
 let inverterFreq = 0;
 
+let REQUEST_RATE = 1000;
+
 window.onload = () => {
     initChart();
     // Inicia a busca de dados do ESP32
@@ -30,7 +32,7 @@ function fetchData() {
             console.error("Falha ao buscar dados do ESP32:", error);
             // Opcional: mostrar um indicador de erro na UI
         }
-    }, 5000); // Busca dados a cada 1 segundo
+    }, REQUEST_RATE); // Busca dados a cada X segundos
 }
 
 function initChart() {
