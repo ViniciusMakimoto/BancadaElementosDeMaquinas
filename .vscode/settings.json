@@ -7,11 +7,6 @@
     }
   ],
   "editor.formatOnSave": true,
-  // --- WEB (Prettier) ---
-  "[html]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
-  "[css]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
-  "[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
-  "[json]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
 
   // --- PYTHON (Black) ---
   //"[python]": { "editor.defaultFormatter": "ms-python.black-formatter" },

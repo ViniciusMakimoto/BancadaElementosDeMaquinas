@@ -3,6 +3,7 @@ import os
 import htmlmin
 import rjsmin as jsmin
 import gzip
+import base64
 from rcssmin import cssmin
 
 # --- Configuração ---
@@ -10,6 +11,7 @@ from rcssmin import cssmin
 HTML_IN = "web/index.html"
 CSS_IN = "web/style.css"
 JS_IN = "web/script.js"
+ICON_IN = "web/favicon.ico"
 
 # Arquivo de saída na pasta 'data' para o ESP32 (agora comprimido)
 HTML_OUT = "data/index.html.gz"
@@ -64,6 +66,19 @@ js_script_tag = '<script src="script.js"></script>'
 script_tag = f"<script>{minified_js}</script>"
 html_content = html_content.replace(js_script_tag, script_tag)
 print(" -> JavaScript incorporado no final do <body>.")
+
+# --- Injeção do Favicon (Base64) ---
+if os.path.exists(ICON_IN):
+    print("Embutindo favicon.ico...")
+    try:
+        with open(ICON_IN, "rb") as f:
+            b64_icon = base64.b64encode(f.read()).decode('utf-8')
+        icon_tag = f'<link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,{b64_icon}">'
+        if '</head>' in html_content:
+            html_content = html_content.replace('</head>', icon_tag + '</head>')
+            print(" -> Favicon embutido no <head>.")
+    except Exception as e:
+        print(f"AVISO: Falha ao embutir favicon - {e}")
 
 # --- Minificação do HTML Final ---
 print("Minificando HTML final...")

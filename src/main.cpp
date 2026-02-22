@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include "Config.h"
 #include "FileSystemWrapper.h"
 #include "WebServerManager.h"
@@ -20,6 +21,7 @@ WebServerManager webManager;
 
 void setup()
 {
+
     Serial.begin(115200);
 
     // 1. Inicializa Sistema de Arquivos (Wrapper)
@@ -33,9 +35,19 @@ void setup()
         // Callback para GET /api/data (Retorna JSON)
         []() -> String
         {
-            // Aqui você montará o JSON real com ArduinoJson
-            // Exemplo simplificado:
-            return {}; //"{\"rpm1\": " + String(sensor1.getRPM()) + ", \"status\": \"OK\"}";
+            // Cria um documento JSON para armazenar os dados
+            StaticJsonDocument<256> doc;
+
+            // Gera valores aleatórios para simular os 4 sensores de RPM
+            doc["rpm1"] = random(800, 1200);
+            doc["rpm2"] = random(700, 1100);
+            doc["rpm3"] = random(600, 1000);
+            doc["rpm4"] = random(500, 900);
+
+            // Serializa o JSON para uma string
+            String output;
+            serializeJson(doc, output);
+            return output;
         },
         // Callback para POST /api/command (Recebe JSON)
         [](String body)

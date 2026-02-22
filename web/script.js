@@ -9,8 +9,29 @@ let inverterFreq = 0;
 
 window.onload = () => {
     initChart();
-    startSimulation();
+    // Inicia a busca de dados do ESP32
+    fetchData(); 
 };
+
+/* ================================
+   BUSCA DADOS DO ESP32
+================================ */
+
+function fetchData() {
+    setInterval(async () => {
+        try {
+            const response = await fetch('/api/data');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            updateInterface(data);
+        } catch (error) {
+            console.error("Falha ao buscar dados do ESP32:", error);
+            // Opcional: mostrar um indicador de erro na UI
+        }
+    }, 5000); // Busca dados a cada 1 segundo
+}
 
 function initChart() {
     const ctx = document.getElementById('vibrationChart').getContext('2d');
@@ -106,41 +127,7 @@ function checkAuth() {
     }
 }
 
-/* ================================
-   SIMULAÇÃO REALISTA DE RPM
-================================ */
 
-function startSimulation() {
-
-    // A cada 8 segundos muda o alvo do motor
-    setInterval(() => {
-        targetRPM = Math.floor(Math.random() * 1800);
-    }, 8000);
-
-    simulationInterval = setInterval(() => {
-
-        // Simula inércia (aceleração suave)
-        motorRPM += (targetRPM - motorRPM) * 0.05;
-
-        // Pequena oscilação natural
-        let noise = (Math.random() - 0.5) * 20;
-
-        let rpm1 = Math.max(0, motorRPM + noise);
-        let rpm2 = rpm1 * 0.75;  // redução exemplo
-        let rpm3 = rpm2 * 0.8;
-        let rpm4 = rpm3 * 0.9;
-
-        let data = {
-            rpm1: Math.round(rpm1),
-            rpm2: Math.round(rpm2),
-            rpm3: Math.round(rpm3),
-            rpm4: Math.round(rpm4)
-        };
-
-        updateInterface(data);
-
-    }, 500); // atualiza mais suave (0.5s)
-}
 
 /* ================================
    ATUALIZA INTERFACE + GRÁFICO
