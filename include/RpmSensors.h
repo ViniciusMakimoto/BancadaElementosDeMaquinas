@@ -28,6 +28,5 @@ private:
 
     static SensorState sensorStates[4];
     static const uint8_t sensorPins[4];
-    static const unsigned long DEBOUNCE_MS = 5;
     unsigned long lastCalculationTime;
 };

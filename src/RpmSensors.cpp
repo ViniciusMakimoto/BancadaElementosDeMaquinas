@@ -32,17 +32,24 @@ void RpmSensors::update()
         unsigned long dt = currentTime - lastCalculationTime;
         lastCalculationTime = currentTime;
 
+        unsigned long pulsesArray[4];
+
+        noInterrupts(); // Desativa interrupções para leitura segura do contador
+
         for (int i = 0; i < 4; i++)
         {
-            // Desativa interrupções para leitura segura do contador
-            noInterrupts();
-            unsigned long pulses = sensorStates[i].pulseCount;
+            pulsesArray[i] = sensorStates[i].pulseCount;
             sensorStates[i].pulseCount = 0; // Reseta para a próxima janela
-            interrupts();
+        }
 
+        interrupts();
+
+        for (int i = 0; i < 4; i++)
+        {
+            unsigned long pulses = pulsesArray[i];
             // Cálculo da frequência e RPM
             float freqHz = (pulses * 1000.0) / dt;
-            sensorStates[i].rpm = freqHz * 60.0;
+            sensorStates[i].rpm = (freqHz / PULSES_PER_REVOLUTION) * 60.0;
         }
     }
 #endif
@@ -70,7 +77,7 @@ void RpmSensors::getRpmsJson(JsonDocument &doc)
 void IRAM_ATTR RpmSensors::handleInterrupt(int sensorIndex)
 {
     unsigned long now = millis();
-    if (now - sensorStates[sensorIndex].lastInterruptTime >= DEBOUNCE_MS)
+    if (now - sensorStates[sensorIndex].lastInterruptTime >= SENSOR_DEBOUNCE)
     {
         sensorStates[sensorIndex].pulseCount++;
         sensorStates[sensorIndex].lastInterruptTime = now;

@@ -11,6 +11,11 @@ WebServer webServer;
 RpmSensors rpmSensors;
 // WegInverter inversor(MODBUS_SLAVE_ID);
 
+// --- Buffer Global para JSON ---
+// Pré-aloca o buffer para o JSON. Evita alocação de memória e serialização a cada requisição.
+char jsonBuffer[256];
+unsigned long lastJsonUpdateTime = 0;
+
 void setup()
 {
     Serial.begin(115200);
@@ -23,14 +28,10 @@ void setup()
 
     // Configura a API antes de iniciar o servidor
     webServer.configureApi(
-        // Callback para GET /api/data (Retorna JSON com dados dos sensores)
+        // Callback para GET /api/data (Retorna JSON com dados)
         []() -> String
         {
-            StaticJsonDocument<256> doc;
-            rpmSensors.getRpmsJson(doc); // Preenche o JSON com os dados de RPM
-            String output;
-            serializeJson(doc, output);
-            return output;
+            return jsonBuffer;
         },
         // Callback para POST /api/command (Recebe JSON)
         [](String body)
@@ -53,4 +54,14 @@ void loop()
 {
     // Atualiza o cálculo de RPM (só faz algo se não estiver em modo simulação)
     rpmSensors.update();
+
+    // Atualiza o JSON para a API em uma frequência controlada (ex: 2x por segundo)
+    if (millis() - lastJsonUpdateTime > JSON_UPDATE_RATE)
+    {
+        lastJsonUpdateTime = millis();
+
+        StaticJsonDocument<256> doc;
+        rpmSensors.getRpmsJson(doc);
+        serializeJson(doc, jsonBuffer, sizeof(jsonBuffer));
+    }
 }

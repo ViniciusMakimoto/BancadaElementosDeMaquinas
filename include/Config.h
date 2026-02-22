@@ -3,7 +3,11 @@
 #include <IPAddress.h>
 
 // --- Settings ---
-static u_int16_t SENSOR_UPDATE_RATE = 1000;
+static const uint16_t SENSOR_UPDATE_RATE = 1000;
+static const uint16_t SENSOR_DEBOUNCE = 5;
+#define PULSES_PER_REVOLUTION 2
+
+static const uint16_t JSON_UPDATE_RATE = 500;
 
 // --- Modo de Simulação ---
 #define SENSOR_SIMULATION_ENABLED false
