@@ -1,13 +1,13 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include "Config.h"
-#include "FileSystemWrapper.h"
-#include "WebServerManager.h"
+#include "FileSystem.h"
+#include "WebServer.h"
 // #include "WegInverter.h"
 // #include "RpmSensor.h"
 
 // --- Instanciação dos Objetos ---
-WebServerManager webManager;
+WebServer webManager;
 // WegInverter inversor(MODBUS_SLAVE_ID);
 
 // Sensores (Exemplo para 1 sensor, replicar para os outros)
@@ -25,7 +25,7 @@ void setup()
     Serial.begin(115200);
 
     // 1. Inicializa Sistema de Arquivos (Wrapper)
-    if (!FileSystemWrapper::begin())
+    if (!FileSystem::begin())
     {
         Serial.println("Falha crítica no FS. Sistema pode ficar instável.");
     }

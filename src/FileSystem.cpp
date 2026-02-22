@@ -1,6 +1,6 @@
-#include "FileSystemWrapper.h"
+#include "FileSystem.h"
 
-bool FileSystemWrapper::begin()
+bool FileSystem::begin()
 {
 #ifdef WOKWI_EMU
     Serial.println("[FS] Modo Simulação (Wokwi): Usando Arrays embutidos.");

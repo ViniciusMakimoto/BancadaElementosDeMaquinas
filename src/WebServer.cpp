@@ -1,8 +1,8 @@
-#include "WebServerManager.h"
+#include "WebServer.h"
 
-WebServerManager::WebServerManager() : server(80) {}
+WebServer::WebServer() : server(80) {}
 
-void WebServerManager::begin()
+void WebServer::begin()
 {
 #ifdef WOKWI_EMU
     // Em simulação, conecta ao WiFi do Wokwi como Estação
@@ -34,14 +34,14 @@ void WebServerManager::begin()
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
               {
         // Envia o GZIP a partir da PROGMEM
-        AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", index_html_gz, index_html_gz_len);
+        AsyncWebServerResponse *response = request->beginResponse(200, "text/html", index_html_gz, index_html_gz_len);
         response->addHeader("Content-Encoding", "gzip");
         request->send(response); });
 
     // Rota para o Chart.js na simulação
     server.on("/lib/chart.umd.min.js", HTTP_GET, [](AsyncWebServerRequest *request)
               {
-        AsyncWebServerResponse *response = request->beginResponse_P(200, "application/javascript", chart_umd_min_js_gz, chart_umd_min_js_gz_len);
+        AsyncWebServerResponse *response = request->beginResponse(200, "application/javascript", chart_umd_min_js_gz, chart_umd_min_js_gz_len);
         response->addHeader("Content-Encoding", "gzip");
         request->send(response); });
 #else
@@ -54,7 +54,7 @@ void WebServerManager::begin()
     Serial.println("[WEB] Servidor HTTP iniciado");
 }
 
-void WebServerManager::configureApi(std::function<String()> getDataCallback, std::function<void(String)> postCommandCallback)
+void WebServer::configureApi(std::function<String()> getDataCallback, std::function<void(String)> postCommandCallback)
 {
     // Rota GET: Front-end pede dados dos sensores
     server.on("/api/data", HTTP_GET, [getDataCallback](AsyncWebServerRequest *request)

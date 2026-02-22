@@ -6,7 +6,7 @@
 #include <LittleFS.h>
 #endif
 
-class FileSystemWrapper
+class FileSystem
 {
 public:
     static bool begin();
