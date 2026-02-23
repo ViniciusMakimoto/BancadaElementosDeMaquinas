@@ -1,4 +1,5 @@
 #include "RpmSensors.h"
+#include <math.h>
 
 // --- Inicialização dos Membros Estáticos ---
 SensorState RpmSensors::sensorStates[4];
@@ -64,11 +65,11 @@ void RpmSensors::getRpmsJson(JsonDocument &doc)
     doc["rpm3"] = random(600, 1000);
     doc["rpm4"] = random(500, 900);
 #else
-    // Modo Real: Usa os valores calculados
-    doc["rpm1"] = sensorStates[0].rpm;
-    doc["rpm2"] = sensorStates[1].rpm;
-    doc["rpm3"] = sensorStates[2].rpm;
-    doc["rpm4"] = sensorStates[3].rpm;
+    // Modo Real: Arredonda para 1 casa decimal
+    doc["rpm1"] = round(sensorStates[0].rpm * 10.0) / 10.0;
+    doc["rpm2"] = round(sensorStates[1].rpm * 10.0) / 10.0;
+    doc["rpm3"] = round(sensorStates[2].rpm * 10.0) / 10.0;
+    doc["rpm4"] = round(sensorStates[3].rpm * 10.0) / 10.0;
 #endif
 }
 

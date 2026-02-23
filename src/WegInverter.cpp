@@ -55,10 +55,8 @@ void WegInverter::update()
     taskENTER_CRITICAL(&inverterMutex);
     if (result == node.ku8MBSuccess)
     {
-
-        // TODO: Validar se precisar de correção.
-        // O valor para o inversor é de 0 a 8196, que corresponde a 0-60Hz
-        _currentFrequency = node.getResponseBuffer(0) / 136.6f;
+        // O valor do inversor é de 0 a 600, que corresponde a 0-60Hz
+        _currentFrequency = node.getResponseBuffer(0) / 10;
 
         // Por simplicidade, se a frequência > 0.1, está girando.
         if (_currentFrequency > 0.1)

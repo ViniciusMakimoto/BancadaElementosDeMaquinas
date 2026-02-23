@@ -12,7 +12,7 @@ static const uint16_t JSON_UPDATE_RATE = 500;
 static const uint16_t INVERTER_UPDATE_RATE = 1000;
 
 // --- Modo de Simulação ---
-#define SENSOR_SIMULATION_ENABLED false
+#define SENSOR_SIMULATION_ENABLED true
 #define WEG_INVERTER_SIMULATION_ENABLED false
 
 // --- Wi-Fi & Rede ---
@@ -41,12 +41,11 @@ static const IPAddress SUBNET(255, 255, 255, 0);
 #define MODBUS_SLAVE_ID 1
 #define MODBUS_BAUDRATE 9600
 
-// TODO: Validar endereços
-//  Registradores do Inversor (Exemplos, ajuste conforme manual)
+//  Registradores do Inversor
 //  Leitura
 static const uint16_t REG_READ_FREQUENCY = 2;
 // #define REG_READ_CURRENT 0x0002
 // #define REG_READ_MOTOR_STATUS 0x0003
 // Escrita
-static const uint16_t REG_WRITE_FREQUENCY = 684;
-static const uint16_t REG_WRITE_COMMAND = 683;
+static const uint16_t REG_WRITE_FREQUENCY = 683;
+static const uint16_t REG_WRITE_COMMAND = 682;
