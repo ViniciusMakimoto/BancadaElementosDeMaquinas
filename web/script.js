@@ -1,24 +1,29 @@
+/* ================================
+   CONFIGURAÇÕES GERAIS
+================================ */
+const REQUEST_RATE = 1000; // ms: Taxa de atualização de dados do ESP32
 let rpmChart;
-let simulationInterval;
-
-let motorRPM = 0;
-let targetRPM = 0;
-
-let inverterOn = false;
-let inverterFreq = 0;
-
-let REQUEST_RATE = 1000;
 
 window.onload = () => {
     initChart();
-    // Inicia a busca de dados do ESP32
-    fetchData(); 
+    fetchData(); // Inicia a busca de dados do ESP32
+
+    // Listener para ATUALIZAR O TEXTO do slider de frequência
+    document.getElementById('freqSlider').addEventListener('input', (e) => {
+        document.getElementById('freqVal').innerText = e.target.value;
+    });
+
+    // Listener para ENVIAR O COMANDO quando o usuário soltar o slider
+    document.getElementById('freqSlider').addEventListener('change', (e) => {
+        sendInverterCommand(); // Envia só a frequência
+    });
 };
 
 /* ================================
-   BUSCA DADOS DO ESP32
+   COMUNICAÇÃO COM O ESP32
 ================================ */
 
+// Busca dados da API (/api/data) em loop
 function fetchData() {
     setInterval(async () => {
         try {
@@ -30,129 +35,106 @@ function fetchData() {
             updateInterface(data);
         } catch (error) {
             console.error("Falha ao buscar dados do ESP32:", error);
-            // Opcional: mostrar um indicador de erro na UI
         }
-    }, REQUEST_RATE); // Busca dados a cada X segundos
+    }, REQUEST_RATE);
 }
 
-function initChart() {
-    const ctx = document.getElementById('vibrationChart').getContext('2d');
-
-    rpmChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [
-                {
-                    label: 'Motor RPM',
-                    data: [],
-                    borderColor: '#ff4d4d',
-                    tension: 0.3
-                },
-                {
-                    label: 'Eixo 2 RPM',
-                    data: [],
-                    borderColor: '#4da6ff',
-                    tension: 0.3
-                },
-                {
-                    label: 'Eixo 3 RPM',
-                    data: [],
-                    borderColor: '#00ff88',
-                    tension: 0.3
-                },
-                {
-                    label: 'Eixo 4 RPM',
-                    data: [],
-                    borderColor: '#ffd633',
-                    tension: 0.3
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            animation: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 2000
-                }
-            }
-        }
-    });
-}
-
-function sendControl(action) {
-
-    if (action === "start") {
-        inverterOn = true;
-        document.getElementById("invStatus").innerText = "LIGADO";
-        document.getElementById("invStatus").className = "status-on";
+// Envia comandos para a API (/api/command)
+async function sendInverterCommand(state) {
+    const freqValue = parseFloat(document.getElementById('freqSlider').value);
+    
+    // Monta o objeto de comando dinamicamente
+    const command = { frequency: freqValue };
+    if (state) { // Adiciona o estado do motor apenas se ele for fornecido (RUNNING/STOPPED)
+        command.motorState = state;
     }
 
-    if (action === "stop") {
-        inverterOn = false;
-        inverterFreq = 0;
-        targetRPM = 0;
-
-        document.getElementById("invStatus").innerText = "DESLIGADO";
-        document.getElementById("invStatus").className = "status-off";
+    try {
+        await fetch('/api/command', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(command)
+        });
+    } catch (error) {
+        console.error("Falha ao enviar comando para o ESP32:", error);
     }
 }
 
-function updateFreq(val) {
+/* ================================
+   INTERFACE DO USUÁRIO (UI)
+================================ */
 
-    inverterFreq = parseFloat(val);
+function updateInterface(data) {
+    // --- RPMs ---
+    document.getElementById('rpm1').innerText = data.rpm1 || 0;
+    document.getElementById('rpm2').innerText = data.rpm2 || 0;
+    document.getElementById('rpm3').innerText = data.rpm3 || 0;
+    document.getElementById('rpm4').innerText = data.rpm4 || 0;
 
-    document.getElementById('freqVal').innerText = val;
-    document.getElementById('invFreq').innerText = val + " Hz";
+    // --- Inversor ---
+    const invStatusEl = document.getElementById('invStatus');
+    const invFreqEl = document.getElementById('invFreq');
+    const currentStatus = data.inverterStatus || "Parado";
 
-    // Conversão simples Hz → RPM (motor 4 polos)
-    if (inverterOn) {
-        targetRPM = inverterFreq * 30; 
-    }
+    invFreqEl.innerText = `${(data.inverterFrequency || 0).toFixed(1)} Hz`;
+    invStatusEl.innerText = currentStatus.toUpperCase();
+    
+    invStatusEl.className = (currentStatus === "Girando") ? "status-on" : "status-off";
+
+    // --- Gráfico ---
+    updateChart(data);
 }
 
 function openModal() {
     document.getElementById('loginModal').style.display = 'flex';
 }
- 
+
 function checkAuth() {
     const pin = document.getElementById('pinInput').value;
-    // Validação simples no front (Idealmente, o ESP validaria via WS)
-    if(pin === "1234") {
+    if (pin === "1234") {
         document.getElementById('operatorControl').classList.remove('hidden');
         document.getElementById('loginModal').style.display = 'none';
         document.getElementById('loginBtn').innerText = "Operador Logado";
     } else {
         alert("PIN Incorreto!");
     }
+    document.getElementById('pinInput').value = "";
 }
 
-
-
 /* ================================
-   ATUALIZA INTERFACE + GRÁFICO
+   GRÁFICO (Chart.js)
 ================================ */
 
-function updateInterface(data) {
+function initChart() {
+    const ctx = document.getElementById('vibrationChart').getContext('2d');
+    rpmChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                { label: 'Motor RPM', data: [], borderColor: '#ff4d4d', tension: 0.3 },
+                { label: 'Eixo 2 RPM', data: [], borderColor: '#4da6ff', tension: 0.3 },
+                { label: 'Eixo 3 RPM', data: [], borderColor: '#00ff88', tension: 0.3 },
+                { label: 'Eixo 4 RPM', data: [], borderColor: '#ffd633', tension: 0.3 }
+            ]
+        },
+        options: {
+            responsive: true,
+            animation: false,
+            scales: { y: { beginAtZero: true, max: 2000 } }
+        }
+    });
+}
 
-    document.getElementById('rpm1').innerText = data.rpm1;
-    document.getElementById('rpm2').innerText = data.rpm2;
-    document.getElementById('rpm3').innerText = data.rpm3;
-    document.getElementById('rpm4').innerText = data.rpm4;
-
+function updateChart(data) {
     rpmChart.data.labels.push(new Date().toLocaleTimeString());
-
-    rpmChart.data.datasets[0].data.push(data.rpm1);
-    rpmChart.data.datasets[1].data.push(data.rpm2);
-    rpmChart.data.datasets[2].data.push(data.rpm3);
-    rpmChart.data.datasets[3].data.push(data.rpm4);
+    rpmChart.data.datasets.forEach((ds, i) => {
+        ds.data.push(data[`rpm${i+1}`] || 0);
+    });
 
     if (rpmChart.data.labels.length > 20) {
         rpmChart.data.labels.shift();
         rpmChart.data.datasets.forEach(ds => ds.data.shift());
     }
-
-    rpmChart.update();
+    rpmChart.update('none');
 }

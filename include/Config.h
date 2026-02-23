@@ -11,6 +11,7 @@ static const uint16_t JSON_UPDATE_RATE = 500;
 
 // --- Modo de Simulação ---
 #define SENSOR_SIMULATION_ENABLED false
+#define WEG_INVERTER_SIMULATION_ENABLED true
 
 // --- Wi-Fi & Rede ---
 static const char *SSID_NAME = "Bancada_TCC_Vinicius";

@@ -1,18 +1,38 @@
 #pragma once
 #include <Arduino.h>
+#include <ArduinoJson.h>
+#include "Config.h"
+
 // #include <ModbusMaster.h> // Descomente quando instalar a lib
+
+enum InverterStatus
+{
+    STOPPED,
+    RUNNING,
+    FAULT
+};
 
 class WegInverter
 {
 private:
     // ModbusMaster node;
+    portMUX_TYPE inverterMutex = portMUX_INITIALIZER_UNLOCKED;
     uint8_t _slaveId;
+    InverterStatus _status;
+    float _currentFrequency;
+
+    const char *getStatusString();
 
 public:
     WegInverter(uint8_t slaveId);
     void begin(int rxPin, int txPin);
+    void update();
+    void getInverterDataJson(JsonDocument &doc);
+
     void setFrequency(float hz);
     void start();
     void stop();
-    float readCurrent(); // Exemplo de leitura
+
+    InverterStatus getStatus();
+    float getCurrentFrequency();
 };

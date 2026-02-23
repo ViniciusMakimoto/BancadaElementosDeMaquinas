@@ -37,10 +37,10 @@
             <div class="card control-panel">
                 <h2>Controle do Inversor WEG</h2>
                 <div class="btn-group">
-                    <button class="btn-on" onclick="sendControl('start')">LIGAR</button>
-                    <button class="btn-off" onclick="sendControl('stop')">DESLIGAR</button>
+                    <button class="btn-on" onclick="sendInverterCommand('RUNNING')">LIGAR</button>
+                    <button class="btn-off" onclick="sendInverterCommand('STOPPED')">DESLIGAR</button>
                 </div>
-                <input type="range" id="freqSlider" min="0" max="60" value="0" oninput="updateFreq(this.value)">
+                <input type="range" id="freqSlider" min="0" max="60" value="0">
                 <p>Frequência: <span id="freqVal">0</span> Hz</p>
             </div>
         </section>
