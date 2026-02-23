@@ -3,7 +3,7 @@
 #include <ArduinoJson.h>
 #include "Config.h"
 
-// #include <ModbusMaster.h> // Descomente quando instalar a lib
+#include <ModbusMaster.h>
 
 enum InverterStatus
 {
@@ -15,11 +15,12 @@ enum InverterStatus
 class WegInverter
 {
 private:
-    // ModbusMaster node;
+    ModbusMaster node;
     portMUX_TYPE inverterMutex = portMUX_INITIALIZER_UNLOCKED;
     uint8_t _slaveId;
     InverterStatus _status;
     float _currentFrequency;
+    unsigned long _lastUpdateTime = 0;
 
     const char *getStatusString();
 

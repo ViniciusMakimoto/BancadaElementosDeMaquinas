@@ -2,7 +2,8 @@
 
 WegInverter::WegInverter(uint8_t slaveId) : _slaveId(slaveId),
                                             _status(STOPPED),
-                                            _currentFrequency(0.0)
+                                            _currentFrequency(0.0),
+                                            _lastUpdateTime(0)
 {
 }
 
@@ -11,8 +12,18 @@ void WegInverter::begin(int rxPin, int txPin)
 #if WEG_INVERTER_SIMULATION_ENABLED
     Serial.println("[WEG] Inversor inicializado (Simulado)");
 #else
-    // Serial2.begin(MODBUS_BAUDRATE, SERIAL_8N1, rxPin, txPin);
-    // node.begin(_slaveId, Serial2);
+    Serial2.begin(MODBUS_BAUDRATE, SERIAL_8N1, rxPin, txPin);
+    node.begin(_slaveId, Serial2);
+    // Configura o pino de controle de direção do barramento RS485
+    pinMode(PIN_RS485_DE, OUTPUT);
+    digitalWrite(PIN_RS485_DE, LOW); // Modo de recepção por padrão
+
+    // Adiciona callbacks para o controle do pino DE
+    node.preTransmission([]()
+                         { digitalWrite(PIN_RS485_DE, HIGH); });
+    node.postTransmission([]()
+                          { digitalWrite(PIN_RS485_DE, LOW); });
+
     Serial.println("[WEG] Inversor inicializado");
 #endif
 }
@@ -30,8 +41,42 @@ void WegInverter::update()
     }
     taskEXIT_CRITICAL(&inverterMutex);
 #else
-    // A lógica de hardware leria os registros do inversor aqui periodicamente,
-    // se necessário, para verificar status ou outros dados.
+    // Debounce para não sobrecarregar a comunicação Modbus
+    if (millis() - _lastUpdateTime < INVERTER_UPDATE_RATE)
+    {
+        return;
+    }
+    _lastUpdateTime = millis();
+
+    uint8_t result;
+    // Exemplo: Lendo a frequência do inversor (ajustar registradores)
+    result = node.readHoldingRegisters(REG_READ_FREQUENCY, 1);
+
+    taskENTER_CRITICAL(&inverterMutex);
+    if (result == node.ku8MBSuccess)
+    {
+
+        // TODO: Validar se precisar de correção.
+        // O valor para o inversor é de 0 a 8196, que corresponde a 0-60Hz
+        _currentFrequency = node.getResponseBuffer(0) / 136.6f;
+
+        // Por simplicidade, se a frequência > 0.1, está girando.
+        if (_currentFrequency > 0.1)
+        {
+            _status = RUNNING;
+        }
+        else
+        {
+            _status = STOPPED;
+        }
+    }
+    else
+    {
+        _status = FAULT; // Falha na comunicação
+        _currentFrequency = 0;
+        Serial.println("[WEG] Falha ao ler dados do inversor.");
+    }
+    taskEXIT_CRITICAL(&inverterMutex);
 #endif
 }
 
@@ -55,9 +100,10 @@ void WegInverter::setFrequency(float hz)
     Serial.println("[WEG SIM] Frequência definida para: " + String(hz, 2) + " Hz");
 
 #else
-    // Lógica Modbus para escrever no registrador de frequência
     Serial.println("[WEG] Definindo Frequência: " + String(hz, 2) + " Hz");
-    // node.writeSingleRegister(ADDRESS, hz); // Exemplo
+    // O valor para o inversor é de 0 a 8196, que corresponde a 0-60Hz
+    uint16_t value = static_cast<uint16_t>(hz * 136.6f);
+    node.writeSingleRegister(REG_WRITE_FREQUENCY, value);
 #endif
 }
 
@@ -82,8 +128,9 @@ void WegInverter::start()
         Serial.println("[WEG SIM] Não é possível iniciar, frequência é 0.");
     }
 #else
-    // Lógica Modbus para enviar comando de partida
     Serial.println("[WEG] Comando START enviado");
+
+    node.writeSingleRegister(REG_WRITE_COMMAND, 7);
 #endif
 }
 
@@ -95,8 +142,9 @@ void WegInverter::stop()
     taskEXIT_CRITICAL(&inverterMutex);
     Serial.println("[WEG SIM] Comando STOP recebido");
 #else
-    // Lógica Modbus para enviar comando de parada
     Serial.println("[WEG] Comando STOP enviado");
+
+    node.writeSingleRegister(REG_WRITE_COMMAND, 0);
 #endif
 }
 
