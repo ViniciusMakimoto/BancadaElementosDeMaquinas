@@ -56,7 +56,7 @@ A arquitetura é dividida em três camadas principais:
 
 1.  **Clone o repositório:**
     ```bash
-    git clone <URL_DO_REPOSITORIO>
+    git clone https://github.com/ViniciusMakimoto/BancadaElementosDeMaquinas
     cd BancadaElementosDeMaquina
     ```
 
