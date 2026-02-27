@@ -13,10 +13,10 @@ static const uint16_t INVERTER_UPDATE_RATE = 1000;
 
 // --- Modo de Simulação ---
 #define SENSOR_SIMULATION_ENABLED true
-#define WEG_INVERTER_SIMULATION_ENABLED false
+#define WEG_INVERTER_SIMULATION_ENABLED true
 
 // --- Wi-Fi & Rede ---
-static const char *SSID_NAME = "Bancada_TCC_Vinicius";
+static const char *SSID_NAME = "Bancada_EM";
 static const char *WIFI_PASS = "12345678";
 
 // IP Fixo
