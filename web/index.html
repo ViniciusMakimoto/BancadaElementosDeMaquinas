@@ -1,38 +1,65 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bancada Didática - Painel de Controle</title>
     <link rel="stylesheet" href="style.css">
     <script src="lib/chart.umd.min.js"></script>
 </head>
+
 <body class="dark-theme">
     <header>
-        <h1>Bancada de Elementos de Máquina</h1>
+        <h1>Bancada Didática de Elementos de Máquina</h1>
+        <div class="connection-status">
+            <span id="status-indicator" class="status-error"></span>
+            <span id="status-text">Desconectado</span>
+        </div>
+        <nav>
+            <a href="#dashboard" class="nav-link active">Dashboard</a>
+            <a href="#grafico" class="nav-link">Gráfico</a>
+            <a href="#controle" class="nav-link" style="display: none;">Controle</a>
+        </nav>
         <button id="loginBtn" onclick="openModal()">Login Operador</button>
     </header>
- 
-    <main>
+
+    <main id="dashboard" class="page">
         <section class="grid-container">
-            <div class="card"><h3>Motor RPM</h3><p id="rpm1">0</p></div>
-            <div class="card"><h3>Eixo 2 RPM</h3><p id="rpm2">0</p></div>
-            <div class="card"><h3>Eixo 3 RPM</h3><p id="rpm3">0</p></div>
-            <div class="card"><h3>Eixo 4 RPM</h3><p id="rpm4">0</p></div>
+            <div class="card">
+                <h3>Status Inversor</h3>
+                <p id="invStatus" class="status-off">PARADO</p>
+            </div>
             <div class="card">
                 <h3>Frequência Inversor</h3>
                 <p id="invFreq">0 Hz</p>
             </div>
-
             <div class="card">
-                <h3>Status Inversor</h3>
-                <p id="invStatus" class="status-off">DESLIGADO</p>
+                <h3>Motor RPM</h3>
+                <p id="rpm1">0</p>
+            </div>
+            <div class="card">
+                <h3>Eixo 2 RPM</h3>
+                <p id="rpm2">0</p>
+            </div>
+            <div class="card">
+                <h3>Eixo 3 RPM</h3>
+                <p id="rpm3">0</p>
+            </div>
+            <div class="card">
+                <h3>Eixo 4 RPM</h3>
+                <p id="rpm4">0</p>
             </div>
         </section>
- 
+    </main>
+
+    <main id="grafico" class="page" style="display: none;">
         <section class="chart-container">
             <canvas id="vibrationChart"></canvas>
         </section>
- 
+    </main>
+
+    <main id="controle" class="page" style="display: none;">
         <section id="operatorControl" class="hidden">
             <div class="card control-panel">
                 <h2>Controle do Inversor WEG</h2>
@@ -45,7 +72,7 @@
             </div>
         </section>
     </main>
- 
+
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <h3>Acesso do Operador</h3>
@@ -53,8 +80,8 @@
             <button onclick="checkAuth()">Entrar</button>
         </div>
     </div>
- 
+
     <script src="script.js"></script>
 </body>
+
 </html>
- 

@@ -22,27 +22,93 @@ header {
     border-bottom: 2px solid var(--accent-color);
     padding-bottom: 10px;
     margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+header h1 {
+    font-size: 1.5rem;
+    margin-right: 20px;
+}
+
+/* Connection Status */
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    background-color: var(--card-bg);
+    border-radius: 6px;
+}
+
+#status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    transition: background-color 0.5s;
+}
+
+#status-indicator.status-ok {
+    background-color: #28a745; /* Verde */
+    animation: none;
+}
+
+#status-indicator.status-error {
+    background-color: var(--danger-color); /* Vermelho */
+    animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+    0% { box-shadow: 0 0 0 0 rgba(255, 75, 43, 0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(255, 75, 43, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 75, 43, 0); }
+}
+
+/* Navegação */
+nav {
+    display: flex;
+    gap: 15px;
+    background-color: var(--card-bg);
+    padding: 5px 15px;
+    border-radius: 6px;
+}
+
+.nav-link {
+    color: var(--text-color);
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.nav-link:hover {
+    background-color: #333;
+}
+
+.nav-link.active {
+    background-color: var(--accent-color);
+    color: var(--card-bg);
+    font-weight: bold;
 }
 
 /* Grid de Sensores */
 .grid-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(2, 1fr); /* 2 colunas por padrão */
+    gap: 15px;
     margin-bottom: 30px;
 }
 
 .card {
     background: var(--card-bg);
-    padding: 20px;
+    padding: 15px;
     border-radius: 8px;
     border: 1px solid var(--border-color);
     text-align: center;
     box-shadow: 0 4px 6px rgba(0,0,0,0.3);
 }
 
-.card h3 { margin: 0; font-size: 0.9rem; color: #888; }
-.card p { font-size: 2.5rem; font-weight: bold; color: var(--accent-color); margin: 10px 0; }
+.card h3 { margin: 0; font-size: 0.8rem; color: #888; }
+.card p { font-size: 2rem; font-weight: bold; color: var(--accent-color); margin: 10px 0; }
 
 /* Cores dos Sensores RPM */
 #rpm1 { color: #ff4d4d; }
@@ -56,6 +122,9 @@ header {
     padding: 20px;
     border-radius: 8px;
     margin-bottom: 30px;
+    height: 65vh; /* Altura responsiva, 65% da altura da tela */
+    position: relative;
+    box-sizing: border-box;
 }
 
 /* Painel de Controle (Restrito) */
@@ -99,6 +168,7 @@ input[type=range] {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
     background: rgba(0,0,0,0.8);
+    z-index: 1000;
     justify-content: center;
     align-items: center;
 }
@@ -109,9 +179,80 @@ input[type=range] {
     border-radius: 10px;
     border: 1px solid var(--accent-color);
     text-align: center;
+    width: 80%;
+    max-width: 400px;
 }
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== MEDIA QUERIES PARA RESPONSIVIDADE ===== */
+@media (max-width: 768px) {
+    body {
+        padding: 15px;
+    }
+
+    header {
+        flex-direction: column;
+        align-items: center; /* Centraliza tudo */
+        gap: 20px;
+    }
+    
+    header h1 {
+        font-size: 1.3rem;
+        text-align: center;
+    }
+
+    nav {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap; /* Permite que os links quebrem a linha */
+    }
+
+    .nav-link {
+        padding: 8px 10px;
+    }
+
+    #loginBtn {
+        width: 100%;
+        max-width: 300px; /* Largura máxima para não ficar excessivo */
+        padding: 12px;
+    }
+
+    .card p {
+        font-size: 1.8rem;
+    }
+
+    .chart-container {
+        height: 50vh; /* Ajusta a altura para telas menores */
+    }
+
+    .modal-content {
+        width: 90%;
+    }
+}
+
+@media (max-width: 480px) {
+    header h1 {
+        font-size: 1.1rem;
+    }
+
+    .grid-container {
+        /* Uma coluna em celulares */
+        grid-template-columns: 1fr;
+    }
+
+    .card p {
+        font-size: 2rem; /* Aumenta um pouco para dar destaque */
+    }
+
+    .control-panel .btn-group {
+        flex-direction: column; /* Botões em coluna */
+    }
+
+    .chart-container {
+        height: 40vh; /* Ajuste fino para telas bem pequenas */
+    }
 }

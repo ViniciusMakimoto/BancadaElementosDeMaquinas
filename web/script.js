@@ -8,6 +8,11 @@ window.onload = () => {
     initChart();
     fetchData(); // Inicia a busca de dados do ESP32
 
+    // Adiciona o manipulador de eventos para a navegação SPA
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', navigateToPage);
+    });
+
     // Listener para ATUALIZAR O TEXTO do slider de frequência
     document.getElementById('freqSlider').addEventListener('input', (e) => {
         document.getElementById('freqVal').innerText = e.target.value;
@@ -20,11 +25,38 @@ window.onload = () => {
 };
 
 /* ================================
+   NAVEGAÇÃO SPA
+================================ */
+function navigateToPage(event) {
+    event.preventDefault(); // Impede o comportamento padrão do link
+
+    const targetId = event.currentTarget.getAttribute('href'); // #dashboard ou #controle
+    
+    // Esconde todas as páginas
+    document.querySelectorAll('.page').forEach(page => {
+        page.style.display = 'none';
+    });
+
+    // Mostra a página alvo
+    document.querySelector(targetId).style.display = 'block';
+
+    // Atualiza o estado 'active' nos links de navegação
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    event.currentTarget.classList.add('active');
+}
+
+
+/* ================================
    COMUNICAÇÃO COM O ESP32
 ================================ */
 
 // Busca dados da API (/api/data) em loop
 function fetchData() {
+    const statusIndicator = document.getElementById('status-indicator');
+    const statusText = document.getElementById('status-text');
+
     setInterval(async () => {
         try {
             const response = await fetch('/api/data');
@@ -32,9 +64,18 @@ function fetchData() {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const data = await response.json();
+            
+            // Atualiza UI e status de conexão OK
             updateInterface(data);
+            statusIndicator.className = 'status-ok';
+            statusText.textContent = 'Conectado';
+
         } catch (error) {
             console.error("Falha ao buscar dados do ESP32:", error);
+            
+            // Atualiza status de conexão para ERRO
+            statusIndicator.className = 'status-error';
+            statusText.textContent = 'Erro de Conexão';
         }
     }, REQUEST_RATE);
 }
@@ -95,6 +136,8 @@ function checkAuth() {
         document.getElementById('operatorControl').classList.remove('hidden');
         document.getElementById('loginModal').style.display = 'none';
         document.getElementById('loginBtn').innerText = "Operador Logado";
+        // Mostra o link de navegação para a página de controle
+        document.querySelector('a[href="#controle"]').style.display = 'inline';
     } else {
         alert("PIN Incorreto!");
     }
@@ -120,6 +163,7 @@ function initChart() {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             animation: false,
             scales: { y: { beginAtZero: true, max: 2000 } }
         }
