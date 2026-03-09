@@ -28,7 +28,7 @@
         <section class="grid-container">
             <div class="card">
                 <h3>Status Inversor</h3>
-                <p id="invStatus" class="status-off">PARADO</p>
+                <p id="invStatus" class="status-text-off">PARADO</p>
             </div>
             <div class="card">
                 <h3>Frequência Inversor</h3>
@@ -55,14 +55,14 @@
 
     <main id="grafico" class="page" style="display: none;">
         <section class="chart-container">
-            <canvas id="vibrationChart"></canvas>
+            <canvas id="mainChart"></canvas>
         </section>
     </main>
 
     <main id="controle" class="page" style="display: none;">
         <section id="operatorControl" class="hidden">
             <div class="card control-panel">
-                <h2>Controle do Inversor WEG</h2>
+                <h2>Controle do Inversor</h2>
                 <div class="btn-group">
                     <button class="btn-on" onclick="sendInverterCommand('RUNNING')">LIGAR</button>
                     <button class="btn-off" onclick="sendInverterCommand('STOPPED')">DESLIGAR</button>

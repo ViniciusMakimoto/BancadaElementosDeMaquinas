@@ -2,11 +2,17 @@
    CONFIGURAÇÕES GERAIS
 ================================ */
 const REQUEST_RATE = 1000; // ms: Taxa de atualização de dados do ESP32
+const MOCK_SENSORS = true;
 let rpmChart;
 
 window.onload = () => {
     initChart();
-    fetchData(); // Inicia a busca de dados do ESP32
+    if (MOCK_SENSORS) {
+        mockFetchData();
+    }
+    else {
+        fetchData(); // Inicia a busca de dados do ESP32
+    }
 
     // Adiciona o manipulador de eventos para a navegação SPA
     document.querySelectorAll('.nav-link').forEach(link => {
@@ -24,6 +30,109 @@ window.onload = () => {
     });
 };
 
+
+/* ================================
+   MOCK DA INTERFACE
+================================ */
+
+// --- Variáveis de estado da simulação ---
+let simState = 'IDLE'; // Estado inicial é 'IDLE'
+let stateTime = 0;
+let baseRpm = 0;
+let targetRpm = 0;
+let previousRpm = 0;
+
+const RAMP_UP_TIME = 15 * 1000;   // 5 segundos para acelerar
+const STABLE_TIME = 25 * 1000;  // 15 segundos em velocidade estável
+const RAMP_DOWN_TIME = 15 * 1000; // 5 segundos para desacelerar
+const IDLE_TIME = 20 * 1000;      // 3 segundos em marcha lenta
+
+const MAX_RUN_RPM = 1800; // RPM máximo em funcionamento
+const MIN_RUN_RPM = 1600; // RPM mínimo em funcionamento
+const IDLE_RPM = 400;     // RPM em marcha lenta
+
+function mockFetchData() {
+    const statusIndicator = document.getElementById('status-indicator');
+    const statusText = document.getElementById('status-text');
+
+    // Inicia o RPM base no valor de marcha lenta
+    baseRpm = IDLE_RPM;
+
+    setInterval(() => {
+        // --- Lógica de simulação do motor (executa independentemente) ---
+        stateTime += REQUEST_RATE;
+
+        switch (simState) {
+            case 'IDLE':
+                baseRpm = IDLE_RPM + (Math.random() - 0.5) * 20;
+                if (stateTime >= IDLE_TIME) {
+                    simState = 'STARTING';
+                    stateTime = 0;
+                    targetRpm = Math.random() * (MAX_RUN_RPM - MIN_RUN_RPM) + MIN_RUN_RPM;
+                    previousRpm = baseRpm;
+                }
+                break;
+            case 'STARTING':
+                baseRpm = previousRpm + (targetRpm - previousRpm) * (stateTime / RAMP_UP_TIME);
+                if (stateTime >= RAMP_UP_TIME) {
+                    simState = 'RUNNING';
+                    stateTime = 0;
+                    baseRpm = targetRpm;
+                }
+                break;
+            case 'RUNNING':
+                baseRpm = targetRpm + (Math.random() - 0.5) * 50;
+                if (stateTime >= STABLE_TIME) {
+                    simState = 'STOPPING';
+                    stateTime = 0;
+                    previousRpm = baseRpm;
+                }
+                break;
+            case 'STOPPING':
+                baseRpm = previousRpm + (IDLE_RPM - previousRpm) * (stateTime / RAMP_DOWN_TIME);
+                if (stateTime >= RAMP_DOWN_TIME) {
+                    simState = 'IDLE';
+                    stateTime = 0;
+                    baseRpm = IDLE_RPM;
+                }
+                break;
+        }
+        baseRpm = Math.max(0, baseRpm);
+
+        // --- Geração de dados Mock ---
+        statusIndicator.className = 'status-ok';
+        statusText.textContent = 'Modo Simulado';
+
+        const inverterFrequency = parseFloat(document.getElementById('freqSlider').value);
+        let inverterStatus;
+
+        // Lógica de Status: Falha > Parado (freq 0) > Girando
+        if (Math.random() < 0.2) {
+            inverterStatus = 'Falha';
+            // RPMs permanecem 0
+        } else if (inverterFrequency === 0) {
+            inverterStatus = 'Parado';
+            // RPMs permanecem 0
+        } else {
+            // Se a frequência for > 0 e não houver falha, o inversor está 'Girando'
+            inverterStatus = 'Girando';
+            // E os RPMs exibidos são baseados na simulação contínua
+        }
+
+        const mockData = {
+            rpm1: Math.round(Math.max(0, baseRpm + (Math.random() - 0.5) * 15)),
+            rpm2: Math.round(Math.max(0, baseRpm - 20 + (Math.random() - 0.5) * 20)),
+            rpm3: Math.round(Math.max(0, baseRpm - 40 + (Math.random() - 0.5) * 25)),
+            rpm4: Math.round(Math.max(0, baseRpm - 60 + (Math.random() - 0.5) * 30)),
+            inverterFrequency: inverterFrequency,
+            inverterStatus: inverterStatus
+        };
+
+        // Atualiza a interface com os dados simulados
+        updateInterface(mockData);
+    }, REQUEST_RATE);
+}
+
 /* ================================
    NAVEGAÇÃO SPA
 ================================ */
@@ -31,7 +140,7 @@ function navigateToPage(event) {
     event.preventDefault(); // Impede o comportamento padrão do link
 
     const targetId = event.currentTarget.getAttribute('href'); // #dashboard ou #controle
-    
+
     // Esconde todas as páginas
     document.querySelectorAll('.page').forEach(page => {
         page.style.display = 'none';
@@ -64,7 +173,7 @@ function fetchData() {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const data = await response.json();
-            
+
             // Atualiza UI e status de conexão OK
             updateInterface(data);
             statusIndicator.className = 'status-ok';
@@ -72,7 +181,7 @@ function fetchData() {
 
         } catch (error) {
             console.error("Falha ao buscar dados do ESP32:", error);
-            
+
             // Atualiza status de conexão para ERRO
             statusIndicator.className = 'status-error';
             statusText.textContent = 'Erro de Conexão';
@@ -83,7 +192,7 @@ function fetchData() {
 // Envia comandos para a API (/api/command)
 async function sendInverterCommand(state) {
     const freqValue = parseFloat(document.getElementById('freqSlider').value);
-    
+
     // Monta o objeto de comando dinamicamente
     const command = { frequency: freqValue };
     if (state) { // Adiciona o estado do motor apenas se ele for fornecido (RUNNING/STOPPED)
@@ -115,12 +224,29 @@ function updateInterface(data) {
     // --- Inversor ---
     const invStatusEl = document.getElementById('invStatus');
     const invFreqEl = document.getElementById('invFreq');
-    const currentStatus = data.inverterStatus || "Parado";
+    const currentStatus = data.inverterStatus || "Parado"; // Default to "Parado"
 
     invFreqEl.innerText = `${(data.inverterFrequency || 0).toFixed(1)} Hz`;
-    invStatusEl.innerText = currentStatus.toUpperCase();
-    
-    invStatusEl.className = (currentStatus === "Girando") ? "status-on" : "status-off";
+
+    // Limpa classes de status anteriores
+    invStatusEl.classList.remove('status-text-on', 'status-text-off', 'status-text-error');
+
+    // Lógica de 3 estados para o status do inversor
+    switch (currentStatus) {
+        case 'Girando':
+            invStatusEl.innerText = 'GIRANDO';
+            invStatusEl.classList.add('status-text-on');
+            break;
+        case 'Falha':
+            invStatusEl.innerText = 'FALHA';
+            invStatusEl.classList.add('status-text-error');
+            break;
+        case 'Parado':
+        default:
+            invStatusEl.innerText = 'PARADO';
+            invStatusEl.classList.add('status-text-off');
+            break;
+    }
 
     // --- Gráfico ---
     updateChart(data);
@@ -149,36 +275,106 @@ function checkAuth() {
 ================================ */
 
 function initChart() {
-    const ctx = document.getElementById('vibrationChart').getContext('2d');
+    const ctx = document.getElementById('mainChart').getContext('2d');
     rpmChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: [],
             datasets: [
-                { label: 'Motor RPM', data: [], borderColor: '#ff4d4d', tension: 0.3 },
-                { label: 'Eixo 2 RPM', data: [], borderColor: '#4da6ff', tension: 0.3 },
-                { label: 'Eixo 3 RPM', data: [], borderColor: '#00ff88', tension: 0.3 },
-                { label: 'Eixo 4 RPM', data: [], borderColor: '#ffd633', tension: 0.3 }
+                { label: 'Motor RPM', data: [], borderColor: '#ff4d4d', tension: 0.3, yAxisID: 'y' },
+                { label: 'Eixo 2 RPM', data: [], borderColor: '#4da6ff', tension: 0.3, yAxisID: 'y' },
+                { label: 'Eixo 3 RPM', data: [], borderColor: '#00ff88', tension: 0.3, yAxisID: 'y' },
+                { label: 'Eixo 4 RPM', data: [], borderColor: '#ffd633', tension: 0.3, yAxisID: 'y' },
+                { label: 'Frequência (Hz)', data: [], borderColor: '#f92672', tension: 0.3, yAxisID: 'y1', borderDash: [5, 5] }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             animation: false,
-            scales: { y: { beginAtZero: true, max: 2000 } }
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'RPM'
+                    }
+                    // min/max serão definidos dinamicamente em updateChart()
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    min: 0,
+                    max: 70, // Range fixo para frequência (Hz)
+                    title: {
+                        display: true,
+                        text: 'Hz'
+                    },
+                    // Não desenha a grade para o eixo Y secundário para não poluir o gráfico
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                }
+            }
         }
     });
 }
-
 function updateChart(data) {
+    // Adiciona o novo timestamp
     rpmChart.data.labels.push(new Date().toLocaleTimeString());
-    rpmChart.data.datasets.forEach((ds, i) => {
-        ds.data.push(data[`rpm${i+1}`] || 0);
+
+    // Adiciona os novos dados a cada dataset correspondente
+    rpmChart.data.datasets.forEach(dataset => {
+        switch (dataset.label) {
+            case 'Motor RPM':
+                dataset.data.push(data.rpm1 || 0);
+                break;
+            case 'Eixo 2 RPM':
+                dataset.data.push(data.rpm2 || 0);
+                break;
+            case 'Eixo 3 RPM':
+                dataset.data.push(data.rpm3 || 0);
+                break;
+            case 'Eixo 4 RPM':
+                dataset.data.push(data.rpm4 || 0);
+                break;
+            case 'Frequência (Hz)':
+                dataset.data.push(data.inverterFrequency || 0);
+                break;
+        }
     });
 
+    // Mantém o histórico do gráfico em 20 pontos
     if (rpmChart.data.labels.length > 20) {
         rpmChart.data.labels.shift();
         rpmChart.data.datasets.forEach(ds => ds.data.shift());
     }
+
+    // --- LÓGICA DE AUTO-SCALE DO EIXO Y (RPMs) ---
+    // 1. Filtra apenas os datasets de RPM (que usam o eixo 'y')
+    const rpmDatasets = rpmChart.data.datasets.filter(ds => ds.yAxisID === 'y');
+    const allDataPoints = rpmDatasets.flatMap(dataset => dataset.data);
+
+    if (allDataPoints.length > 0) {
+        const minValue = Math.min(...allDataPoints);
+        const maxValue = Math.max(...allDataPoints);
+
+        // 2. Calcula um buffer (margem) para que os picos não fiquem na borda
+        const range = maxValue - minValue;
+        const buffer = range > 0 ? range * 0.2 : 100; // Buffer de 20% ou 100 se a linha for plana
+
+        // 3. Define o novo range do eixo Y de RPM, garantindo que o mínimo não seja negativo
+        rpmChart.options.scales.y.min = Math.max(0, Math.floor(minValue - buffer));
+        rpmChart.options.scales.y.max = Math.ceil(maxValue + buffer);
+    } else {
+        // Fallback se não houver dados
+        rpmChart.options.scales.y.min = 0;
+        rpmChart.options.scales.y.max = 1000;
+    }
+
+    // Atualiza o gráfico sem animação para melhor performance
     rpmChart.update('none');
 }

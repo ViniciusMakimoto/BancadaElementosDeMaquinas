@@ -19,7 +19,17 @@ void WebServer::begin()
     Serial.println(WiFi.localIP());
     Serial.println("[WEB] No seu PC, acesse: http://localhost:8180");
 #else
-    // Em hardware real, conecta-se a uma rede Wi-Fi existente
+#ifdef WIFI_MODE_AP
+    // Modo Access Point (AP)
+    WiFi.mode(WIFI_AP);
+    WiFi.softAPConfig(LOCAL_IP, GATEWAY, SUBNET);
+    WiFi.softAP(SSID_NAME, WIFI_PASS);
+    Serial.print("[WIFI] Modo Access Point Ativado. SSID: ");
+    Serial.println(SSID_NAME);
+    Serial.print("[WEB] IP: http://");
+    Serial.println(WiFi.softAPIP());
+#else
+    // Modo Station (STA) - Conecta-se a uma rede Wi-Fi existente
     WiFi.mode(WIFI_STA);
     WiFi.begin(SSID_NAME, WIFI_PASS);
     Serial.print("[WIFI] Conectando à rede ");
@@ -32,6 +42,7 @@ void WebServer::begin()
     Serial.println(" Conectado!");
     Serial.print("[WEB] IP: http://");
     Serial.println(WiFi.localIP());
+#endif
 #endif
 
     // 2. Configura Rotas Web

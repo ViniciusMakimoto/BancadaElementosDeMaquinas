@@ -16,6 +16,9 @@ static const uint16_t INVERTER_UPDATE_RATE = 1000;
 #define WEG_INVERTER_SIMULATION_ENABLED true
 
 // --- Wi-Fi & Rede ---
+// Descomente a linha abaixo para usar o modo Access Point (AP)
+#define WIFI_MODE_AP
+
 static const char *SSID_NAME = "Bancada_EM";
 static const char *WIFI_PASS = "12345678";
 

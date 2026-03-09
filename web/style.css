@@ -2,7 +2,8 @@
     --bg-color: #121212;
     --card-bg: #1e1e1e;
     --text-color: #e0e0e0;
-    --accent-color: #00ff9d; /* Verde Industrial */
+    --accent-color: #00ff9d;
+    /* Verde Industrial */
     --danger-color: #ff4b2b;
     --border-color: #333;
 }
@@ -13,6 +14,10 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 20px;
+    height: 100vh;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
 }
 
 header {
@@ -48,19 +53,29 @@ header h1 {
 }
 
 #status-indicator.status-ok {
-    background-color: #28a745; /* Verde */
+    background-color: #28a745;
+    /* Verde */
     animation: none;
 }
 
 #status-indicator.status-error {
-    background-color: var(--danger-color); /* Vermelho */
+    background-color: var(--danger-color);
+    /* Vermelho */
     animation: pulse-red 2s infinite;
 }
 
 @keyframes pulse-red {
-    0% { box-shadow: 0 0 0 0 rgba(255, 75, 43, 0.4); }
-    70% { box-shadow: 0 0 0 8px rgba(255, 75, 43, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(255, 75, 43, 0); }
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 75, 43, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 8px rgba(255, 75, 43, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 75, 43, 0);
+    }
 }
 
 /* Navegação */
@@ -93,7 +108,8 @@ nav {
 /* Grid de Sensores */
 .grid-container {
     display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 2 colunas por padrão */
+    grid-template-columns: repeat(2, 1fr);
+    /* 2 colunas por padrão */
     gap: 15px;
     margin-bottom: 30px;
 }
@@ -104,27 +120,83 @@ nav {
     border-radius: 8px;
     border: 1px solid var(--border-color);
     text-align: center;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
-.card h3 { margin: 0; font-size: 0.8rem; color: #888; }
-.card p { font-size: 2rem; font-weight: bold; color: var(--accent-color); margin: 10px 0; }
+.card h3 {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.card p {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--accent-color);
+    margin: 10px 0;
+}
 
 /* Cores dos Sensores RPM */
-#rpm1 { color: #ff4d4d; }
-#rpm2 { color: #4da6ff; }
-#rpm3 { color: #00ff88; }
-#rpm4 { color: #ffd633; }
+#rpm1 {
+    color: #ff4d4d;
+}
+
+#rpm2 {
+    color: #4da6ff;
+}
+
+#rpm3 {
+    color: #00ff88;
+}
+
+#rpm4 {
+    color: #ffd633;
+}
+
+#invFreq {
+    color: #f92672;
+    /* Magenta */
+}
+
+#invStatus.status-text-on {
+    color: #00fff2;
+    /* Azul Ciano (ativo) */
+}
+
+#invStatus.status-text-off {
+    color: #999999;
+    /* Cinza (inativo) */
+}
+
+#invStatus.status-text-error {
+    color: var(--danger-color);
+    /* Vermelho (falha) */
+}
+
+main.page {
+    flex-grow: 1;
+    /* Faz a página atual crescer */
+    min-height: 0;
+    /* Previne overflow de flex-items */
+    animation: fadeIn 0.5s;
+    /* Adiciona a animação de fade-in */
+}
+
+#grafico.page {
+    display: flex;
+    /* Transforma a página do gráfico num container flex */
+    flex-direction: column;
+}
 
 /* Gráfico */
 .chart-container {
     background: var(--card-bg);
     padding: 20px;
     border-radius: 8px;
-    margin-bottom: 30px;
-    height: 65vh; /* Altura responsiva, 65% da altura da tela */
     position: relative;
     box-sizing: border-box;
+    /* CONTROLA A ALTURA: Ajuste o valor abaixo (ex: 90%, 75%, etc) para seu conforto */
+    height: 100%;
 }
 
 /* Painel de Controle (Restrito) */
@@ -132,10 +204,11 @@ nav {
     border: 2px dashed var(--accent-color);
     padding: 20px;
     border-radius: 12px;
-    animation: fadeIn 0.5s;
 }
 
-.hidden { display: none; }
+.hidden {
+    display: none;
+}
 
 .btn-group {
     display: flex;
@@ -153,8 +226,15 @@ button {
     text-transform: uppercase;
 }
 
-.btn-on { background: #28a745; color: white; }
-.btn-off { background: var(--danger-color); color: white; }
+.btn-on {
+    background: #28a745;
+    color: white;
+}
+
+.btn-off {
+    background: var(--danger-color);
+    color: white;
+}
 
 /* Slider de Frequência */
 input[type=range] {
@@ -164,10 +244,13 @@ input[type=range] {
 
 /* Modal de Login */
 .modal {
-    display: none; 
+    display: none;
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.8);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
     z-index: 1000;
     justify-content: center;
     align-items: center;
@@ -184,8 +267,15 @@ input[type=range] {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ===== MEDIA QUERIES PARA RESPONSIVIDADE ===== */
@@ -196,10 +286,11 @@ input[type=range] {
 
     header {
         flex-direction: column;
-        align-items: center; /* Centraliza tudo */
+        align-items: center;
+        /* Centraliza tudo */
         gap: 20px;
     }
-    
+
     header h1 {
         font-size: 1.3rem;
         text-align: center;
@@ -208,7 +299,8 @@ input[type=range] {
     nav {
         width: 100%;
         justify-content: center;
-        flex-wrap: wrap; /* Permite que os links quebrem a linha */
+        flex-wrap: wrap;
+        /* Permite que os links quebrem a linha */
     }
 
     .nav-link {
@@ -217,16 +309,13 @@ input[type=range] {
 
     #loginBtn {
         width: 100%;
-        max-width: 300px; /* Largura máxima para não ficar excessivo */
+        max-width: 300px;
+        /* Largura máxima para não ficar excessivo */
         padding: 12px;
     }
 
     .card p {
         font-size: 1.8rem;
-    }
-
-    .chart-container {
-        height: 50vh; /* Ajusta a altura para telas menores */
     }
 
     .modal-content {
@@ -245,14 +334,20 @@ input[type=range] {
     }
 
     .card p {
-        font-size: 2rem; /* Aumenta um pouco para dar destaque */
+        font-size: 2rem;
+        /* Aumenta um pouco para dar destaque */
     }
 
     .control-panel .btn-group {
-        flex-direction: column; /* Botões em coluna */
+        flex-direction: column;
+        /* Botões em coluna */
     }
+}
 
+/* Regra para telas 'baixas' em modo paisagem (ex: celular deitado) */
+@media (max-height: 500px) and (orientation: landscape) {
     .chart-container {
-        height: 40vh; /* Ajuste fino para telas bem pequenas */
+        /* Aumenta a altura do gráfico para preencher melhor a tela */
+        height: 90vh;
     }
 }
