@@ -155,22 +155,18 @@ nav {
 
 #invFreq {
     color: #f92672;
-    /* Magenta */
 }
 
 #invStatus.status-text-on {
     color: #00fff2;
-    /* Azul Ciano (ativo) */
 }
 
 #invStatus.status-text-off {
-    color: #999999;
-    /* Cinza (inativo) */
+    color: #d3d1d1;
 }
 
 #invStatus.status-text-error {
     color: var(--danger-color);
-    /* Vermelho (falha) */
 }
 
 main.page {
@@ -258,12 +254,62 @@ input[type=range] {
 
 .modal-content {
     background: var(--card-bg);
-    padding: 40px;
+    padding: 0 25px 25px;
     border-radius: 10px;
     border: 1px solid var(--accent-color);
     text-align: center;
     width: 80%;
-    max-width: 400px;
+    max-width: 350px;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-content {
+    padding: 0 15px 15px;
+}
+
+.modal-content h3 {
+    font-size: 1.5rem;
+    padding-top: 0px;
+    margin-bottom: 25px;
+    color: var(--accent-color);
+}
+
+#pinInput {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 1rem;
+    padding: 10px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    border-radius: 5px;
+    margin-bottom: 5px;
+    letter-spacing: 8px;
+}
+
+#pinInput::placeholder {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Makes placeholder less prominent */
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: center;
+    /* Centraliza os botões */
+}
+
+/* Para que os botões tenham a mesma largura */
+.modal-buttons button {
+    flex: 1;
+    font-size: 0.8rem;
+    padding: 8px 15px;
+}
+
+.btn-cancel {
+    background-color: var(--danger-color);
 }
 
 @keyframes fadeIn {

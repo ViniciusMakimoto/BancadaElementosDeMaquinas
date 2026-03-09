@@ -234,16 +234,16 @@ function updateInterface(data) {
     // Lógica de 3 estados para o status do inversor
     switch (currentStatus) {
         case 'Girando':
-            invStatusEl.innerText = 'GIRANDO';
+            invStatusEl.innerText = 'LIGADO';
             invStatusEl.classList.add('status-text-on');
             break;
         case 'Falha':
-            invStatusEl.innerText = 'FALHA';
+            invStatusEl.innerText = 'EM FALHA';
             invStatusEl.classList.add('status-text-error');
             break;
         case 'Parado':
         default:
-            invStatusEl.innerText = 'PARADO';
+            invStatusEl.innerText = 'DESLIGADO';
             invStatusEl.classList.add('status-text-off');
             break;
     }
@@ -254,6 +254,11 @@ function updateInterface(data) {
 
 function openModal() {
     document.getElementById('loginModal').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('loginModal').style.display = 'none';
+    document.getElementById('pinInput').value = ""; // Limpa o PIN
 }
 
 function checkAuth() {

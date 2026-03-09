@@ -77,7 +77,10 @@
         <div class="modal-content">
             <h3>Acesso do Operador</h3>
             <input type="password" id="pinInput" placeholder="Digite o PIN">
-            <button onclick="checkAuth()">Entrar</button>
+            <div class="modal-buttons">
+                <button onclick="checkAuth()">Entrar</button>
+                <button onclick="closeModal()" class="btn-cancel">Cancelar</button>
+            </div>
         </div>
     </div>
 
