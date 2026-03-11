@@ -275,6 +275,42 @@ function checkAuth() {
     document.getElementById('pinInput').value = "";
 }
 
+function calculate() {
+    const input1 = parseFloat(document.getElementById('calc-input1').value);
+    const input2 = parseFloat(document.getElementById('calc-input2').value);
+    const operator = document.getElementById('calc-operator').value;
+    const resultEl = document.getElementById('calc-result');
+    let result;
+
+    if (isNaN(input1) || isNaN(input2)) {
+        resultEl.innerText = "Entradas inválidas";
+        return;
+    }
+
+    switch (operator) {
+        case 'add':
+            result = input1 + input2;
+            break;
+        case 'subtract':
+            result = input1 - input2;
+            break;
+        case 'multiply':
+            result = input1 * input2;
+            break;
+        case 'divide':
+            if (input2 === 0) {
+                resultEl.innerText = "Divisão por zero";
+                return;
+            }
+            result = input1 / input2;
+            break;
+        default:
+            resultEl.innerText = "Operador inválido";
+            return;
+    }
+    resultEl.innerText = result.toFixed(2);
+}
+
 /* ================================
    GRÁFICO (Chart.js)
 ================================ */

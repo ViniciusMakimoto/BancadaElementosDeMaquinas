@@ -397,3 +397,32 @@ input[type=range] {
         height: 90vh;
     }
 }
+
+/* Calculadora */
+.calculator {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+}
+.calculator input, .calculator select, .calculator button {
+    padding: 10px;
+    font-size: 1rem;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+}
+.calculator button {
+    cursor: pointer;
+    background-color: var(--accent-color);
+    color: var(--card-bg);
+    font-weight: bold;
+}
+.calculator p {
+    width: 100%;
+    font-size: 1.2rem;
+    margin-top: 15px;
+}

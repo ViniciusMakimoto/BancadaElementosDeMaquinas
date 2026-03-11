@@ -19,6 +19,7 @@
         <nav>
             <a href="#dashboard" class="nav-link active">Dashboard</a>
             <a href="#grafico" class="nav-link">Gráfico</a>
+            <a href="#calculadora" class="nav-link">Calculadora</a>
             <a href="#controle" class="nav-link" style="display: none;">Controle</a>
         </nav>
         <button id="loginBtn" onclick="openModal()">Login Operador</button>
@@ -56,6 +57,24 @@
     <main id="grafico" class="page" style="display: none;">
         <section class="chart-container">
             <canvas id="mainChart"></canvas>
+        </section>
+    </main>
+
+    <main id="calculadora" class="page" style="display: none;">
+        <section class="card">
+            <h2>Calculadora</h2>
+            <div class="calculator">
+                <input type="number" id="calc-input1" placeholder="Valor 1">
+                <select id="calc-operator">
+                    <option value="add">+</option>
+                    <option value="subtract">-</option>
+                    <option value="multiply">*</option>
+                    <option value="divide">/</option>
+                </select>
+                <input type="number" id="calc-input2" placeholder="Valor 2">
+                <button onclick="calculate()">=</button>
+                <p>Resultado: <span id="calc-result">...</span></p>
+            </div>
         </section>
     </main>
 
