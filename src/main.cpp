@@ -33,26 +33,9 @@ void setup()
         {
             return jsonBuffer;
         },
-        // Callback para POST /api/command (Recebe JSON)
-        [](String body)
+        // Callback para POST /api/command (Recebe JSON já validado e parseado)
+        [](JsonVariant &doc)
         {
-            StaticJsonDocument<128> doc;
-            DeserializationError error = deserializeJson(doc, body);
-
-            if (error)
-            {
-                Serial.print(F("[API] Falha no parse do JSON de comando: "));
-                Serial.println(error.c_str());
-                return;
-            }
-
-            // A UI pode enviar a frequência e o estado no mesmo comando
-            if (doc.containsKey("frequency"))
-            {
-                float freq = doc["frequency"];
-                inversor.setFrequency(freq);
-            }
-
             if (doc.containsKey("motorState"))
             {
                 const char *state = doc["motorState"];
@@ -64,6 +47,13 @@ void setup()
                 {
                     inversor.stop();
                 }
+            }
+
+            // A UI pode enviar a frequência e o estado no mesmo comando
+            if (doc.containsKey("frequency"))
+            {
+                float freq = doc["frequency"];
+                inversor.setFrequency(freq);
             }
         });
 

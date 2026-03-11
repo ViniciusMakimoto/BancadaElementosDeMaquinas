@@ -15,10 +15,13 @@ class WebServer
 {
 private:
     AsyncWebServer server;
+    long lastAuthAttempt = 0;
+    const long authAttemptCooldown = 2000; // 2 segundos
+
 
 public:
     WebServer();
     void begin();
     // Registra callbacks para fornecer dados (GET) e receber comandos (POST)
-    void configureApi(std::function<String()> getDataCallback, std::function<void(String)> postCommandCallback);
+    void configureApi(std::function<String()> getDataCallback, std::function<void(JsonVariant &)> postCommandCallback);
 };

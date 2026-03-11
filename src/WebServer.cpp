@@ -1,4 +1,5 @@
 #include "WebServer.h"
+#include <ArduinoJson.h>
 
 WebServer::WebServer() : server(80) {}
 
@@ -72,7 +73,8 @@ void WebServer::begin()
     Serial.println("[WEB] Servidor HTTP iniciado");
 }
 
-void WebServer::configureApi(std::function<String()> getDataCallback, std::function<void(String)> postCommandCallback)
+// A assinatura da callback de comando foi alterada para receber JsonVariant
+void WebServer::configureApi(std::function<String()> getDataCallback, std::function<void(JsonVariant &)> postCommandCallback)
 {
     // Rota GET: Front-end pede dados dos sensores
     server.on("/api/data", HTTP_GET, [getDataCallback](AsyncWebServerRequest *request)
@@ -80,16 +82,43 @@ void WebServer::configureApi(std::function<String()> getDataCallback, std::funct
         String json = getDataCallback();
         request->send(200, "application/json", json); });
 
-    // Rota POST: Front-end envia comandos
-    server.on("/api/command", HTTP_POST, [](AsyncWebServerRequest *request)
-              {
-                  request->send(200, "text/plain", "OK"); // Responde rápido
-              },
-              NULL, [postCommandCallback](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
-              {
-                  String body = "";
-                  for (size_t i = 0; i < len; i++)
-                      body += (char)data[i];
-                  postCommandCallback(body); // Processa o comando
-              });
+    // Rota POST: Front-end envia comandos (com validação de PIN)
+    AsyncCallbackJsonWebHandler *commandHandler = new AsyncCallbackJsonWebHandler("/api/command", [this, postCommandCallback](AsyncWebServerRequest *request, JsonVariant &json)
+                                                                                  {
+        // 1. Valida o PIN
+        JsonObject jsonObj = json.as<JsonObject>();
+        if (!jsonObj.containsKey("pin") || strcmp(jsonObj["pin"], OPERATOR_PIN) != 0)
+        {
+            request->send(401, "application/json", "{\"error\":\"PIN inválido ou ausente\"}");
+            return;
+        }
+
+        // 2. Se o PIN estiver correto, processa o comando
+        postCommandCallback(json);
+        
+        request->send(200, "application/json", "{\"status\":\"Comando recebido\"}"); });
+    server.addHandler(commandHandler);
+
+    // Rota POST de Autenticação
+    AsyncCallbackJsonWebHandler *authHandler = new AsyncCallbackJsonWebHandler("/api/auth", [this](AsyncWebServerRequest *request, JsonVariant &json)
+                                                                                {
+        // 1. Rate Limiting
+        if (millis() - this->lastAuthAttempt < this->authAttemptCooldown)
+        {
+            request->send(429, "application/json", "{\"error\":\"Tente novamente mais tarde\"}");
+            return;
+        }
+        this->lastAuthAttempt = millis();
+
+        // 2. Valida o PIN
+        JsonObject jsonObj = json.as<JsonObject>();
+        if (jsonObj.containsKey("pin") && strcmp(jsonObj["pin"], OPERATOR_PIN) == 0)
+        {
+            request->send(200, "application/json", "{\"status\":\"PIN correto\"}");
+        }
+        else
+        {
+            request->send(401, "application/json", "{\"error\":\"PIN inválido\"}");
+        } });
+    server.addHandler(authHandler);
 }

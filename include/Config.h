@@ -11,6 +11,9 @@ static const uint16_t JSON_UPDATE_RATE = 500;
 
 static const uint16_t INVERTER_UPDATE_RATE = 1000;
 
+// --- Segurança ---
+#define OPERATOR_PIN "1234"
+
 // --- Modo de Simulação ---
 #define SENSOR_SIMULATION_ENABLED true
 #define WEG_INVERTER_SIMULATION_ENABLED true

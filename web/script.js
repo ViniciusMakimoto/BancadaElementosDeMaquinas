@@ -3,7 +3,9 @@
 ================================ */
 const REQUEST_RATE = 1000; // ms: Taxa de atualização de dados do ESP32
 const MOCK_SENSORS = true;
+const MOCK_LOGIN = true;
 let rpmChart;
+let operatorPin = null;
 
 window.onload = () => {
     initChart();
@@ -191,22 +193,41 @@ function fetchData() {
 
 // Envia comandos para a API (/api/command)
 async function sendInverterCommand(state) {
+    if (!operatorPin) {
+        return;
+    }
+
     const freqValue = parseFloat(document.getElementById('freqSlider').value);
 
     // Monta o objeto de comando dinamicamente
-    const command = { frequency: freqValue };
+    const command = {
+        frequency: freqValue,
+        pin: operatorPin
+    };
     if (state) { // Adiciona o estado do motor apenas se ele for fornecido (RUNNING/STOPPED)
         command.motorState = state;
     }
 
     try {
-        await fetch('/api/command', {
+        const response = await fetch('/api/command', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(command)
         });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            if (response.status === 401) { // PIN incorreto ou ausente
+                alert(`Erro de Autenticação: ${errorData.error}`);
+                // Desloga o operador se o PIN for inválido
+                logoutOperator();
+            } else {
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+            }
+        }
     } catch (error) {
         console.error("Falha ao enviar comando para o ESP32:", error);
+        alert(`Erro ao comunicar com o dispositivo: ${error.message}`);
     }
 }
 
@@ -261,18 +282,65 @@ function closeModal() {
     document.getElementById('pinInput').value = ""; // Limpa o PIN
 }
 
-function checkAuth() {
+async function checkAuth() {
     const pin = document.getElementById('pinInput').value;
-    if (pin === "1234") {
-        document.getElementById('operatorControl').classList.remove('hidden');
-        document.getElementById('loginModal').style.display = 'none';
-        document.getElementById('loginBtn').innerText = "Operador Logado";
-        // Mostra o link de navegação para a página de controle
-        document.querySelector('a[href="#controle"]').style.display = 'inline';
-    } else {
-        alert("PIN Incorreto!");
+
+    if (!pin || pin.length !== 4) {
+        alert("PIN deve ter 4 dígitos.");
+        return;
     }
-    document.getElementById('pinInput').value = "";
+
+    if (MOCK_LOGIN) {
+        loginOperator();
+        closeModal();
+        return;
+    }
+
+
+    try {
+        const response = await fetch('/api/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pin: pin })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `PIN inválido`);
+        }
+
+        // PIN Válido!
+        operatorPin = pin;
+        loginOperator();
+        closeModal();
+        console.log("Autenticação bem-sucedida!");
+
+    } catch (error) {
+        console.error("Falha na autenticação:", error);
+        alert(`Erro de Autenticação: ${error.message}`);
+        // Limpa o campo do PIN e mantém o modal aberto para nova tentativa
+        document.getElementById('pinInput').value = "";
+    }
+}
+
+function loginOperator() {
+    document.getElementById('operatorControl').classList.remove('hidden');
+    document.getElementById('loginBtn').innerText = "Logout";
+    document.getElementById('loginBtn').setAttribute('onclick', 'logoutOperator()');
+    document.querySelector('a[href="#controle"]').style.display = 'inline';
+}
+
+function logoutOperator() {
+    operatorPin = null; // Limpa o PIN
+    document.getElementById('operatorControl').classList.add('hidden');
+    document.getElementById('loginBtn').innerText = "Login Operador";
+    document.getElementById('loginBtn').setAttribute('onclick', 'openModal()');
+    // Esconde o link de navegação para a página de controle
+    document.querySelector('a[href="#controle"]').style.display = 'none';
+    // Opcional: Redireciona para o dashboard se estiver na página de controle
+    if (document.querySelector('#controle').style.display === 'block') {
+        document.querySelector('a[href="#dashboard"]').click();
+    }
 }
 
 function calculate() {
