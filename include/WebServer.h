@@ -1,10 +1,11 @@
 #pragma once
+#include <functional>
 #include <Arduino.h>
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
+#include <ArduinoJson.h>
 #include "Config.h"
 #include "FileSystem.h"
-#include <functional>
 
 // Se estiver no Wokwi, precisamos incluir o header gerado (simulado)
 #ifdef WOKWI_EMU
@@ -17,7 +18,6 @@ private:
     AsyncWebServer server;
     long lastAuthAttempt = 0;
     const long authAttemptCooldown = 2000; // 2 segundos
-
 
 public:
     WebServer();

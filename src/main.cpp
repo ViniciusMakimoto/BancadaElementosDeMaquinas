@@ -36,6 +36,13 @@ void setup()
         // Callback para POST /api/command (Recebe JSON já validado e parseado)
         [](JsonVariant &doc)
         {
+            // A UI pode enviar a frequência e o estado no mesmo comando
+            if (doc.containsKey("frequency"))
+            {
+                float freq = doc["frequency"];
+                inversor.setFrequency(freq);
+            }
+
             if (doc.containsKey("motorState"))
             {
                 const char *state = doc["motorState"];
@@ -47,13 +54,6 @@ void setup()
                 {
                     inversor.stop();
                 }
-            }
-
-            // A UI pode enviar a frequência e o estado no mesmo comando
-            if (doc.containsKey("frequency"))
-            {
-                float freq = doc["frequency"];
-                inversor.setFrequency(freq);
             }
         });
 

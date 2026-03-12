@@ -12,7 +12,7 @@ static const uint16_t JSON_UPDATE_RATE = 500;
 static const uint16_t INVERTER_UPDATE_RATE = 1000;
 
 // --- Segurança ---
-#define OPERATOR_PIN "1234"
+#define OPERATOR_PIN "0000"
 
 // --- Modo de Simulação ---
 #define SENSOR_SIMULATION_ENABLED true
@@ -20,7 +20,7 @@ static const uint16_t INVERTER_UPDATE_RATE = 1000;
 
 // --- Wi-Fi & Rede ---
 // Descomente a linha abaixo para usar o modo Access Point (AP)
-#define WIFI_MODE_AP
+// #define WIFI_MODE_AP
 
 static const char *SSID_NAME = "Bancada_EM";
 static const char *WIFI_PASS = "12345678";

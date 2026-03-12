@@ -1,5 +1,6 @@
 #include "WebServer.h"
 #include <ArduinoJson.h>
+#include <AsyncJson.h>
 
 WebServer::WebServer() : server(80) {}
 
@@ -87,21 +88,31 @@ void WebServer::configureApi(std::function<String()> getDataCallback, std::funct
                                                                                   {
         // 1. Valida o PIN
         JsonObject jsonObj = json.as<JsonObject>();
-        if (!jsonObj.containsKey("pin") || strcmp(jsonObj["pin"], OPERATOR_PIN) != 0)
+        const char *receivedPin = jsonObj.containsKey("pin") ? jsonObj["pin"].as<const char *>() : "";
+
+        Serial.println("[COMMAND] Comando recebido.");
+        Serial.print("[COMMAND] PIN Recebido: ");
+        Serial.println(receivedPin);
+        Serial.print("[COMMAND] PIN Esperado: ");
+        Serial.println(OPERATOR_PIN);
+
+        if (strcmp(receivedPin, OPERATOR_PIN) != 0)
         {
+            Serial.println("[COMMAND] Resultado: FALHA - PIN Inválido ou ausente");
             request->send(401, "application/json", "{\"error\":\"PIN inválido ou ausente\"}");
             return;
         }
 
         // 2. Se o PIN estiver correto, processa o comando
+        Serial.println("[COMMAND] Resultado: SUCESSO - PIN Correto");
         postCommandCallback(json);
-        
+
         request->send(200, "application/json", "{\"status\":\"Comando recebido\"}"); });
     server.addHandler(commandHandler);
 
     // Rota POST de Autenticação
     AsyncCallbackJsonWebHandler *authHandler = new AsyncCallbackJsonWebHandler("/api/auth", [this](AsyncWebServerRequest *request, JsonVariant &json)
-                                                                                {
+                                                                               {
         // 1. Rate Limiting
         if (millis() - this->lastAuthAttempt < this->authAttemptCooldown)
         {
@@ -112,12 +123,22 @@ void WebServer::configureApi(std::function<String()> getDataCallback, std::funct
 
         // 2. Valida o PIN
         JsonObject jsonObj = json.as<JsonObject>();
-        if (jsonObj.containsKey("pin") && strcmp(jsonObj["pin"], OPERATOR_PIN) == 0)
+        const char *receivedPin = jsonObj.containsKey("pin") ? jsonObj["pin"].as<const char *>() : "";
+
+        Serial.println("[AUTH] Tentativa de login recebida.");
+        Serial.print("[AUTH] PIN Recebido: ");
+        Serial.println(receivedPin);
+        Serial.print("[AUTH] PIN Esperado: ");
+        Serial.println(OPERATOR_PIN);
+
+        if (strcmp(receivedPin, OPERATOR_PIN) == 0)
         {
+            Serial.println("[AUTH] Resultado: SUCESSO");
             request->send(200, "application/json", "{\"status\":\"PIN correto\"}");
         }
         else
         {
+            Serial.println("[AUTH] Resultado: FALHA");
             request->send(401, "application/json", "{\"error\":\"PIN inválido\"}");
         } });
     server.addHandler(authHandler);
