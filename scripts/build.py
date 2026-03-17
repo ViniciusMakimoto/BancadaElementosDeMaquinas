@@ -12,6 +12,7 @@ HTML_IN = "web/index.html"
 CSS_IN = "web/style.css"
 JS_IN = "web/script.js"
 ICON_IN = "web/favicon.ico"
+DIAGRAM_IN = "web/images/bancada_superior.png"
 
 # Arquivo de saída na pasta 'data' para o ESP32 (agora comprimido)
 HTML_OUT = "data/index.html.gz"
@@ -79,6 +80,23 @@ if os.path.exists(ICON_IN):
             print(" -> Favicon embutido no <head>.")
     except Exception as e:
         print(f"AVISO: Falha ao embutir favicon - {e}")
+
+# --- Injeção da Imagem do Diagrama (Base64) ---
+if os.path.exists(DIAGRAM_IN):
+    print("Embutindo a imagem do diagrama...")
+    try:
+        with open(DIAGRAM_IN, "rb") as f:
+            b64_diagram = base64.b64encode(f.read()).decode('utf-8')
+        
+        # Cria o data URI completo para a imagem PNG
+        diagram_uri = f'data:image/png;base64,{b64_diagram}'
+        
+        # Substitui o placeholder no HTML pelo data URI
+        html_content = html_content.replace('src="images/bancada_superior.png"', f'src="{diagram_uri}"')
+        print(" -> Imagem do diagrama embutida no HTML.")
+    except Exception as e:
+        print(f"AVISO: Falha ao embutir a imagem do diagrama - {e}")
+
 
 # --- Minificação do HTML Final ---
 print("Minificando HTML final...")

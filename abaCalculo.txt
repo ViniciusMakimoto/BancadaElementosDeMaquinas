@@ -1,0 +1,10 @@
+- Entradas:
+rendimentos elementos maquina (4)
+rotação do motor
+CV do motor
+Relação de Transmissão
+
+
+- Saídas:
+Potência Útil
+

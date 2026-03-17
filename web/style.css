@@ -195,6 +195,24 @@ main.page {
     height: 100%;
 }
 
+.diagram-container {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 8px;
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.diagram-container img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
 /* Painel de Controle (Restrito) */
 #operatorControl {
     border: 2px dashed var(--accent-color);
@@ -392,8 +410,9 @@ input[type=range] {
 
 /* Regra para telas 'baixas' em modo paisagem (ex: celular deitado) */
 @media (max-height: 500px) and (orientation: landscape) {
-    .chart-container {
-        /* Aumenta a altura do gráfico para preencher melhor a tela */
+    .chart-container,
+    .diagram-container {
+        /* Aumenta a altura do conteúdo para preencher melhor a tela */
         height: 90vh;
     }
 }

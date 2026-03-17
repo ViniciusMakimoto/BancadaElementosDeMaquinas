@@ -15,8 +15,8 @@ static const uint16_t INVERTER_UPDATE_RATE = 1000;
 #define OPERATOR_PIN "0000"
 
 // --- Modo de Simulação ---
-#define SENSOR_SIMULATION_ENABLED true
-#define WEG_INVERTER_SIMULATION_ENABLED false
+#define SENSOR_SIMULATION_ENABLED false
+#define WEG_INVERTER_SIMULATION_ENABLED true
 
 // --- Wi-Fi & Rede ---
 // Descomente a linha abaixo para usar o modo Access Point (AP)
