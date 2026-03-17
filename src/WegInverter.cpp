@@ -14,15 +14,6 @@ void WegInverter::begin(int rxPin, int txPin)
 #else
     Serial2.begin(MODBUS_BAUDRATE, SERIAL_8N1, rxPin, txPin);
     node.begin(_slaveId, Serial2);
-    // Configura o pino de controle de direção do barramento RS485
-    pinMode(PIN_RS485_DE, OUTPUT);
-    digitalWrite(PIN_RS485_DE, LOW); // Modo de recepção por padrão
-
-    // Adiciona callbacks para o controle do pino DE
-    node.preTransmission([]()
-                         { digitalWrite(PIN_RS485_DE, HIGH); });
-    node.postTransmission([]()
-                          { digitalWrite(PIN_RS485_DE, LOW); });
 
     Serial.println("[WEG] Inversor inicializado");
 #endif

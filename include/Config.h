@@ -16,7 +16,7 @@ static const uint16_t INVERTER_UPDATE_RATE = 1000;
 
 // --- Modo de Simulação ---
 #define SENSOR_SIMULATION_ENABLED true
-#define WEG_INVERTER_SIMULATION_ENABLED true
+#define WEG_INVERTER_SIMULATION_ENABLED false
 
 // --- Wi-Fi & Rede ---
 // Descomente a linha abaixo para usar o modo Access Point (AP)
@@ -41,7 +41,6 @@ static const IPAddress SUBNET(255, 255, 255, 0);
 // Modbus RS485
 #define PIN_RS485_RX 16
 #define PIN_RS485_TX 17
-#define PIN_RS485_DE 4
 
 // --- Configurações do Modbus ---
 #define MODBUS_SLAVE_ID 1
