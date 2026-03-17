@@ -237,10 +237,10 @@ async function sendInverterCommand(state) {
 
 function updateInterface(data) {
     // --- RPMs ---
-    document.getElementById('rpm1').innerText = data.rpm1 || 0;
-    document.getElementById('rpm2').innerText = data.rpm2 || 0;
-    document.getElementById('rpm3').innerText = data.rpm3 || 0;
-    document.getElementById('rpm4').innerText = data.rpm4 || 0;
+    document.getElementById('rpm1').innerText = (data.rpm1 || 0) + " RPM";
+    document.getElementById('rpm2').innerText = (data.rpm2 || 0) + " RPM";
+    document.getElementById('rpm3').innerText = (data.rpm3 || 0) + " RPM";
+    document.getElementById('rpm4').innerText = (data.rpm4 || 0) + " RPM";
 
     // --- Inversor ---
     const invStatusEl = document.getElementById('invStatus');
