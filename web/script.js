@@ -2,8 +2,8 @@
    CONFIGURAÇÕES GERAIS
 ================================ */
 const REQUEST_RATE = 1000; // ms: Taxa de atualização de dados do ESP32
-const MOCK_SENSORS = true;
-const MOCK_LOGIN = true;
+const MOCK_SENSORS = false;
+const MOCK_LOGIN = false;
 let rpmChart;
 let operatorPin = null;
 
