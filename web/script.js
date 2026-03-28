@@ -2,13 +2,14 @@
    CONFIGURAÇÕES GERAIS
 ================================ */
 const REQUEST_RATE = 1000; // ms: Taxa de atualização de dados do ESP32
-const MOCK_SENSORS = false;
-const MOCK_LOGIN = false;
+const MOCK_SENSORS = true;
+const MOCK_LOGIN = true;
 let rpmChart;
 let operatorPin = null;
 
 window.onload = () => {
     initChart();
+    CalcWizard.init();
     if (MOCK_SENSORS) {
         mockFetchData();
     }
@@ -343,41 +344,279 @@ function logoutOperator() {
     }
 }
 
-function calculate() {
-    const input1 = parseFloat(document.getElementById('calc-input1').value);
-    const input2 = parseFloat(document.getElementById('calc-input2').value);
-    const operator = document.getElementById('calc-operator').value;
-    const resultEl = document.getElementById('calc-result');
-    let result;
+/* ================================
+   CALCULADORA - WIZARD DE ELEMENTOS DE MÁQUINA
+================================ */
 
-    if (isNaN(input1) || isNaN(input2)) {
-        resultEl.innerText = "Entradas inválidas";
-        return;
-    }
+const CalcWizard = {
+    currentStep: 0,
+    totalSteps: 6,
+    CV_TO_KW: 0.7355,
 
-    switch (operator) {
-        case 'add':
-            result = input1 + input2;
-            break;
-        case 'subtract':
-            result = input1 - input2;
-            break;
-        case 'multiply':
-            result = input1 * input2;
-            break;
-        case 'divide':
-            if (input2 === 0) {
-                resultEl.innerText = "Divisão por zero";
-                return;
-            }
-            result = input1 / input2;
-            break;
-        default:
-            resultEl.innerText = "Operador inválido";
-            return;
-    }
-    resultEl.innerText = result.toFixed(2);
-}
+    BEARING_TYPES: [
+        { name: 'Rolamento de Esferas', efficiency: 0.99 },
+        { name: 'Rolamento de Rolos Cilíndricos', efficiency: 0.98 },
+        { name: 'Rolamento de Rolos Cônicos', efficiency: 0.97 },
+        { name: 'Rolamento de Agulhas', efficiency: 0.985 },
+        { name: 'Bucha (Mancal de Deslizamento)', efficiency: 0.95 },
+    ],
+
+    // Output de cada estágio
+    outputs: [
+        { rpmIn: 0, rpmOut: 0, powerIn: 0, powerOut: 0, torque: 0, efficiency: 1, ratio: 1 },
+        { rpmIn: 0, rpmOut: 0, powerIn: 0, powerOut: 0, torque: 0, efficiency: 1, ratio: 1 },
+        { rpmIn: 0, rpmOut: 0, powerIn: 0, powerOut: 0, torque: 0, efficiency: 1, ratio: 1 },
+        { rpmIn: 0, rpmOut: 0, powerIn: 0, powerOut: 0, torque: 0, efficiency: 1, ratio: 1 },
+        { rpmIn: 0, rpmOut: 0, powerIn: 0, powerOut: 0, torque: 0, efficiency: 1, ratio: 1 },
+    ],
+
+    init() {
+        this.populateBearingSelects();
+        this.bindInputListeners();
+        this.updateStepperUI();
+        this.updateNavUI();
+    },
+
+    populateBearingSelects() {
+        ['engr-rolamento', 'corr-rolamento'].forEach(id => {
+            const sel = document.getElementById(id);
+            this.BEARING_TYPES.forEach((bt, i) => {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = bt.name + ' (η=' + (bt.efficiency * 100).toFixed(1) + '%)';
+                sel.appendChild(opt);
+            });
+        });
+    },
+
+    bindInputListeners() {
+        const bind = (ids, step) => {
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                el.addEventListener('input', () => this.recalculateFrom(step));
+                if (el.tagName === 'SELECT') {
+                    el.addEventListener('change', () => this.recalculateFrom(step));
+                }
+            });
+        };
+        bind(['motor-potencia', 'motor-frequencia', 'motor-polos', 'motor-slip', 'motor-rendimento'], 0);
+        bind(['polia-d1', 'polia-d2', 'polia-rendimento'], 1);
+        bind(['engr-z1', 'engr-z2', 'engr-modulo', 'engr-rendimento', 'engr-rolamento'], 2);
+        bind(['corr-z1', 'corr-z2', 'corr-passo', 'corr-rendimento', 'corr-rolamento'], 3);
+        bind(['red-relacao', 'red-rendimento'], 4);
+    },
+
+    recalculateFrom(step) {
+        const calcFns = [this.calcMotor, this.calcPolias, this.calcEngrenagens, this.calcCorrentes, this.calcReducer];
+        for (let i = step; i < 5; i++) {
+            calcFns[i].call(this);
+        }
+        if (this.currentStep === 5 && !this._buildingSummary) this.buildSummary();
+    },
+
+    getVal(id) { return parseFloat(document.getElementById(id).value) || 0; },
+
+    fmt(val, dec) {
+        if (isNaN(val) || !isFinite(val)) return '—';
+        return val.toFixed(dec === undefined ? 2 : dec);
+    },
+
+    calcTorque(powerKw, rpm) {
+        return rpm > 0 ? (powerKw * 9549.297) / rpm : 0;
+    },
+
+    // --- ETAPA 0: MOTOR ---
+    calcMotor() {
+        const potCV = this.getVal('motor-potencia');
+        const freq = this.getVal('motor-frequencia');
+        const polos = this.getVal('motor-polos');
+        const slip = this.getVal('motor-slip') / 100;
+        const rend = this.getVal('motor-rendimento') / 100;
+
+        const nSync = (polos > 0 && freq > 0) ? (120 * freq) / polos : 0;
+        const nReal = nSync * (1 - slip);
+        const potBruta = potCV * this.CV_TO_KW;
+        const potKw = potBruta * rend;
+        const torque = this.calcTorque(potKw, nReal);
+
+        this.outputs[0] = { rpmIn: 0, rpmOut: nReal, powerIn: potBruta, powerOut: potKw, torque, efficiency: rend, ratio: 1 };
+
+        document.getElementById('res-motor-nsync').textContent = this.fmt(nSync, 0) + ' RPM';
+        document.getElementById('res-motor-nreal').textContent = this.fmt(nReal, 1) + ' RPM';
+        document.getElementById('res-motor-potutil').textContent = this.fmt(potKw, 3) + ' kW';
+        document.getElementById('res-motor-torque').textContent = this.fmt(torque, 2) + ' N·m';
+    },
+
+    // --- ETAPA 1: POLIAS ---
+    calcPolias() {
+        const prev = this.outputs[0];
+        const d1 = this.getVal('polia-d1');
+        const d2 = this.getVal('polia-d2');
+        const rend = this.getVal('polia-rendimento') / 100;
+
+        const ratio = d1 > 0 ? d2 / d1 : 0;
+        const rpmOut = ratio > 0 ? prev.rpmOut / ratio : 0;
+        const powerOut = prev.powerOut * rend;
+        const torque = this.calcTorque(powerOut, rpmOut);
+
+        this.outputs[1] = { rpmIn: prev.rpmOut, rpmOut, powerIn: prev.powerOut, powerOut, torque, efficiency: rend, ratio };
+
+        document.getElementById('res-polia-i').textContent = this.fmt(ratio, 2);
+        document.getElementById('res-polia-rpm').textContent = this.fmt(rpmOut, 1) + ' RPM';
+        document.getElementById('res-polia-pot').textContent = this.fmt(powerOut, 3) + ' kW';
+        document.getElementById('res-polia-torque').textContent = this.fmt(torque, 2) + ' N·m';
+    },
+
+    // --- ETAPA 2: ENGRENAGENS ---
+    calcEngrenagens() {
+        const prev = this.outputs[1];
+        const z1 = this.getVal('engr-z1');
+        const z2 = this.getVal('engr-z2');
+        const mod = this.getVal('engr-modulo');
+        const rend = this.getVal('engr-rendimento') / 100;
+        const bIdx = parseInt(document.getElementById('engr-rolamento').value) || 0;
+        const bEff = this.BEARING_TYPES[bIdx]?.efficiency || 1;
+
+        const ratio = z1 > 0 ? z2 / z1 : 0;
+        const rpmOut = ratio > 0 ? prev.rpmOut / ratio : 0;
+        const d1 = z1 * mod;
+        const d2 = z2 * mod;
+        const totalEff = rend * bEff;
+        const powerOut = prev.powerOut * totalEff;
+        const torque = this.calcTorque(powerOut, rpmOut);
+
+        this.outputs[2] = { rpmIn: prev.rpmOut, rpmOut, powerIn: prev.powerOut, powerOut, torque, efficiency: totalEff, ratio };
+
+        document.getElementById('res-engr-i').textContent = this.fmt(ratio, 2);
+        document.getElementById('res-engr-rpm').textContent = this.fmt(rpmOut, 1) + ' RPM';
+        document.getElementById('res-engr-d1').textContent = this.fmt(d1, 1) + ' mm';
+        document.getElementById('res-engr-d2').textContent = this.fmt(d2, 1) + ' mm';
+        document.getElementById('res-engr-pot').textContent = this.fmt(powerOut, 3) + ' kW';
+        document.getElementById('res-engr-torque').textContent = this.fmt(torque, 2) + ' N·m';
+    },
+
+    // --- ETAPA 3: CORRENTES ---
+    calcCorrentes() {
+        const prev = this.outputs[2];
+        const z1 = this.getVal('corr-z1');
+        const z2 = this.getVal('corr-z2');
+        const passo = this.getVal('corr-passo');
+        const rend = this.getVal('corr-rendimento') / 100;
+        const bIdx = parseInt(document.getElementById('corr-rolamento').value) || 0;
+        const bEff = this.BEARING_TYPES[bIdx]?.efficiency || 1;
+
+        const ratio = z1 > 0 ? z2 / z1 : 0;
+        const rpmOut = ratio > 0 ? prev.rpmOut / ratio : 0;
+        const d1 = z1 > 0 ? passo / Math.sin(Math.PI / z1) : 0;
+        const d2 = z2 > 0 ? passo / Math.sin(Math.PI / z2) : 0;
+        const totalEff = rend * bEff;
+        const powerOut = prev.powerOut * totalEff;
+        const torque = this.calcTorque(powerOut, rpmOut);
+
+        this.outputs[3] = { rpmIn: prev.rpmOut, rpmOut, powerIn: prev.powerOut, powerOut, torque, efficiency: totalEff, ratio };
+
+        document.getElementById('res-corr-i').textContent = this.fmt(ratio, 2);
+        document.getElementById('res-corr-rpm').textContent = this.fmt(rpmOut, 1) + ' RPM';
+        document.getElementById('res-corr-d1').textContent = this.fmt(d1, 1) + ' mm';
+        document.getElementById('res-corr-d2').textContent = this.fmt(d2, 1) + ' mm';
+        document.getElementById('res-corr-pot').textContent = this.fmt(powerOut, 3) + ' kW';
+        document.getElementById('res-corr-torque').textContent = this.fmt(torque, 2) + ' N·m';
+    },
+
+    // --- ETAPA 4: REDUTOR ---
+    calcReducer() {
+        const prev = this.outputs[3];
+        const ratio = this.getVal('red-relacao');
+        const rend = this.getVal('red-rendimento') / 100;
+
+        const rpmOut = ratio > 0 ? prev.rpmOut / ratio : 0;
+        const powerOut = prev.powerOut * rend;
+        const torque = this.calcTorque(powerOut, rpmOut);
+
+        this.outputs[4] = { rpmIn: prev.rpmOut, rpmOut, powerIn: prev.powerOut, powerOut, torque, efficiency: rend, ratio };
+
+        document.getElementById('res-red-rpm').textContent = this.fmt(rpmOut, 1) + ' RPM';
+        document.getElementById('res-red-pot').textContent = this.fmt(powerOut, 3) + ' kW';
+        document.getElementById('res-red-torque').textContent = this.fmt(torque, 2) + ' N·m';
+    },
+
+    // --- ETAPA 5: RESUMO ---
+    buildSummary() {
+        this._buildingSummary = true;
+        this.recalculateFrom(0);
+        const c = document.getElementById('calc-summary-content');
+        const names = ['Motor', 'Polias e Correia', 'Engrenagens', 'Correntes', 'Redutor'];
+
+        let gEff = 1;
+        this.outputs.forEach(o => { gEff *= o.efficiency; });
+        const last = this.outputs[4];
+
+        let h = '<div class="calc-summary-global">';
+        h += '<div class="calc-summary-stat"><span class="stat-label">Rendimento Global</span><span class="stat-value">' + this.fmt(gEff * 100, 1) + '%</span></div>';
+        h += '<div class="calc-summary-stat"><span class="stat-label">Potência Final</span><span class="stat-value">' + this.fmt(last.powerOut, 3) + ' kW</span></div>';
+        h += '<div class="calc-summary-stat"><span class="stat-label">RPM Final</span><span class="stat-value">' + this.fmt(last.rpmOut, 1) + '</span></div>';
+        h += '<div class="calc-summary-stat"><span class="stat-label">Torque Final</span><span class="stat-value">' + this.fmt(last.torque, 2) + ' N·m</span></div>';
+        h += '</div>';
+
+        h += '<div class="calc-summary-table-wrap"><table class="calc-summary-table">';
+        h += '<thead><tr><th>Estágio</th><th>RPM Ent.</th><th>RPM Saída</th><th>Pot. Ent. (kW)</th><th>Pot. Saída (kW)</th><th>Torque (N·m)</th><th>η</th><th>Relação</th></tr></thead>';
+        h += '<tbody>';
+        this.outputs.forEach((o, i) => {
+            h += '<tr>';
+            h += '<td class="stage-name">' + names[i] + '</td>';
+            h += '<td>' + (i === 0 ? '—' : this.fmt(o.rpmIn, 1)) + '</td>';
+            h += '<td>' + this.fmt(o.rpmOut, 1) + '</td>';
+            h += '<td>' + this.fmt(o.powerIn, 3) + '</td>';
+            h += '<td>' + this.fmt(o.powerOut, 3) + '</td>';
+            h += '<td>' + this.fmt(o.torque, 2) + '</td>';
+            h += '<td>' + this.fmt(o.efficiency * 100, 1) + '%</td>';
+            h += '<td>' + (i === 0 ? '—' : this.fmt(o.ratio, 2) + ':1') + '</td>';
+            h += '</tr>';
+        });
+        h += '</tbody></table></div>';
+        c.innerHTML = h;
+        this._buildingSummary = false;
+    },
+
+    // --- NAVEGAÇÃO ---
+    goToStep(step) {
+        if (step < 0 || step >= this.totalSteps) return;
+        document.querySelectorAll('.calc-step-panel').forEach((p, i) => {
+            p.classList.toggle('active', i === step);
+        });
+        this.currentStep = step;
+        this.updateStepperUI();
+        this.updateNavUI();
+        if (step === 5) this.buildSummary();
+    },
+
+    nextStep() { this.goToStep(this.currentStep + 1); },
+    prevStep() { this.goToStep(this.currentStep - 1); },
+
+    updateStepperUI() {
+        document.querySelectorAll('.calc-stepper-item').forEach((item, i) => {
+            item.classList.remove('active', 'completed');
+            if (i < this.currentStep) item.classList.add('completed');
+            else if (i === this.currentStep) item.classList.add('active');
+        });
+        document.querySelectorAll('.stepper-connector').forEach((conn, i) => {
+            conn.classList.toggle('active', i < this.currentStep);
+        });
+        document.getElementById('calc-step-indicator').textContent = 'Etapa ' + (this.currentStep + 1) + ' de ' + this.totalSteps;
+    },
+
+    updateNavUI() {
+        const prev = document.getElementById('calc-prev-btn');
+        const next = document.getElementById('calc-next-btn');
+        prev.style.visibility = this.currentStep === 0 ? 'hidden' : 'visible';
+        if (this.currentStep === this.totalSteps - 1) {
+            next.style.visibility = 'hidden';
+        } else {
+            next.style.visibility = 'visible';
+            next.textContent = this.currentStep === this.totalSteps - 2 ? 'Ver Resumo →' : 'Próximo →';
+        }
+    },
+};
 
 /* ================================
    GRÁFICO (Chart.js)

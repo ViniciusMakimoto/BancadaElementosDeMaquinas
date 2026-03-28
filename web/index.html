@@ -68,21 +68,291 @@
     </main>
 
     <main id="calculadora" class="page" style="display: none;">
-        <section class="card">
-            <h2>Calculadora</h2>
-            <div class="calculator">
-                <input type="number" id="calc-input1" placeholder="Valor 1">
-                <select id="calc-operator">
-                    <option value="add">+</option>
-                    <option value="subtract">-</option>
-                    <option value="multiply">*</option>
-                    <option value="divide">/</option>
-                </select>
-                <input type="number" id="calc-input2" placeholder="Valor 2">
-                <button onclick="calculate()">=</button>
-                <p>Resultado: <span id="calc-result">...</span></p>
+        <!-- Stepper Bar -->
+        <div class="calc-stepper">
+            <div class="calc-stepper-item active" data-step="0" onclick="CalcWizard.goToStep(0)">
+                <div class="stepper-circle">1</div>
+                <span class="stepper-label">Motor</span>
             </div>
-        </section>
+            <div class="stepper-connector"></div>
+            <div class="calc-stepper-item" data-step="1" onclick="CalcWizard.goToStep(1)">
+                <div class="stepper-circle">2</div>
+                <span class="stepper-label">Polias</span>
+            </div>
+            <div class="stepper-connector"></div>
+            <div class="calc-stepper-item" data-step="2" onclick="CalcWizard.goToStep(2)">
+                <div class="stepper-circle">3</div>
+                <span class="stepper-label">Engrenagens</span>
+            </div>
+            <div class="stepper-connector"></div>
+            <div class="calc-stepper-item" data-step="3" onclick="CalcWizard.goToStep(3)">
+                <div class="stepper-circle">4</div>
+                <span class="stepper-label">Correntes</span>
+            </div>
+            <div class="stepper-connector"></div>
+            <div class="calc-stepper-item" data-step="4" onclick="CalcWizard.goToStep(4)">
+                <div class="stepper-circle">5</div>
+                <span class="stepper-label">Redutor</span>
+            </div>
+            <div class="stepper-connector"></div>
+            <div class="calc-stepper-item" data-step="5" onclick="CalcWizard.goToStep(5)">
+                <div class="stepper-circle">6</div>
+                <span class="stepper-label">Resumo</span>
+            </div>
+        </div>
+
+        <!-- Step Panels -->
+        <div class="calc-panels-wrapper">
+
+            <!-- Step 0: Motor -->
+            <section class="calc-step-panel active" id="calc-step-0">
+                <div class="calc-step-header">
+                    <h2>⚙ Dados do Motor</h2>
+                    <p class="calc-step-desc">Insira os dados da placa do motor e do inversor de frequência.</p>
+                </div>
+                <div class="calc-form-grid">
+                    <div class="calc-form-group">
+                        <label for="motor-potencia">Potência Nominal</label>
+                        <div class="calc-input-wrap">
+                            <input type="number" id="motor-potencia" step="0.1" min="0" placeholder="0.0">
+                            <span class="calc-unit">CV</span>
+                        </div>
+                    </div>
+                    <div class="calc-form-group">
+                        <label for="motor-frequencia">Frequência do Inversor</label>
+                        <div class="calc-input-wrap">
+                            <input type="number" id="motor-frequencia" step="0.1" min="0" max="60" placeholder="0.0">
+                            <span class="calc-unit">Hz</span>
+                        </div>
+                    </div>
+                    <div class="calc-form-group">
+                        <label for="motor-polos">Número de Polos</label>
+                        <div class="calc-input-wrap">
+                            <select id="motor-polos">
+                                <option value="2">2 polos</option>
+                                <option value="4" selected>4 polos</option>
+                                <option value="6">6 polos</option>
+                                <option value="8">8 polos</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="calc-form-group">
+                        <label for="motor-slip">Escorregamento</label>
+                        <div class="calc-input-wrap">
+                            <input type="number" id="motor-slip" step="0.1" min="0" max="10" placeholder="3.0" value="3">
+                            <span class="calc-unit">%</span>
+                        </div>
+                    </div>
+                    <div class="calc-form-group">
+                        <label for="motor-rendimento">Rendimento do Motor</label>
+                        <div class="calc-input-wrap">
+                            <input type="number" id="motor-rendimento" step="0.1" min="0" max="100" placeholder="85" value="85">
+                            <span class="calc-unit">%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="calc-results-box">
+                    <h3>📊 Resultados Parciais</h3>
+                    <div class="calc-result-row"><span>Rotação Síncrona</span><span id="res-motor-nsync" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Rotação Real</span><span id="res-motor-nreal" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Potência Útil</span><span id="res-motor-potutil" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Torque</span><span id="res-motor-torque" class="calc-result-value">—</span></div>
+                </div>
+            </section>
+
+            <!-- Step 1: Polias e Correia -->
+            <section class="calc-step-panel" id="calc-step-1">
+                <div class="calc-step-header">
+                    <h2>⚙ Polias Escalonadas e Correia</h2>
+                    <p class="calc-step-desc">Configure os diâmetros das polias e o rendimento da transmissão por correia.</p>
+                </div>
+                <div class="calc-form-grid">
+                    <div class="calc-form-group">
+                        <label for="polia-d1">Diâmetro Polia Motora (D₁)</label>
+                        <div class="calc-input-wrap">
+                            <input type="number" id="polia-d1" step="0.1" min="0" placeholder="0.0">
+                            <span class="calc-unit">mm</span>
+                        </div>
+                    </div>
+                    <div class="calc-form-group">
+                        <label for="polia-d2">Diâmetro Polia Movida (D₂)</label>
+                        <div class="calc-input-wrap">
+                            <input type="number" id="polia-d2" step="0.1" min="0" placeholder="0.0">
+                            <span class="calc-unit">mm</span>
+                        </div>
+                    </div>
+                    <div class="calc-form-group">
+                        <label for="polia-rendimento">Rendimento da Correia</label>
+                        <div class="calc-input-wrap">
+                            <input type="number" id="polia-rendimento" step="0.1" min="0" max="100" placeholder="95" value="95">
+                            <span class="calc-unit">%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="calc-results-box">
+                    <h3>📊 Resultados Parciais</h3>
+                    <div class="calc-result-row"><span>Relação de Transmissão (i)</span><span id="res-polia-i" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>RPM de Saída</span><span id="res-polia-rpm" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Potência Transmitida</span><span id="res-polia-pot" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Torque na Saída</span><span id="res-polia-torque" class="calc-result-value">—</span></div>
+                </div>
+            </section>
+
+            <!-- Step 2: Engrenagens -->
+            <section class="calc-step-panel" id="calc-step-2">
+                <div class="calc-step-header">
+                    <h2>⚙ Engrenagens</h2>
+                    <p class="calc-step-desc">Dados do par de engrenagens e dos rolamentos dos eixos.</p>
+                </div>
+                <div class="calc-form-grid">
+                    <div class="calc-form-group">
+                        <label for="engr-z1">Nº Dentes Motora (Z₁)</label>
+                        <div class="calc-input-wrap">
+                            <input type="number" id="engr-z1" step="1" min="1" placeholder="0">
+                            <span class="calc-unit">dentes</span>
+                        </div>
+                    </div>
+                    <div class="calc-form-group">
+                        <label for="engr-z2">Nº Dentes Movida (Z₂)</label>
+                        <div class="calc-input-wrap">
+                            <input type="number" id="engr-z2" step="1" min="1" placeholder="0">
+                            <span class="calc-unit">dentes</span>
+                        </div>
+                    </div>
+                    <div class="calc-form-group">
+                        <label for="engr-modulo">Módulo (m)</label>
+                        <div class="calc-input-wrap">
+                            <input type="number" id="engr-modulo" step="0.25" min="0" placeholder="0.0">
+                            <span class="calc-unit">mm</span>
+                        </div>
+                    </div>
+                    <div class="calc-form-group">
+                        <label for="engr-rendimento">Rendimento do Par</label>
+                        <div class="calc-input-wrap">
+                            <input type="number" id="engr-rendimento" step="0.1" min="0" max="100" placeholder="97" value="97">
+                            <span class="calc-unit">%</span>
+                        </div>
+                    </div>
+                    <div class="calc-form-group">
+                        <label for="engr-rolamento">Tipo de Rolamento</label>
+                        <div class="calc-input-wrap">
+                            <select id="engr-rolamento"></select>
+                        </div>
+                    </div>
+                </div>
+                <div class="calc-results-box">
+                    <h3>📊 Resultados Parciais</h3>
+                    <div class="calc-result-row"><span>Relação de Transmissão (i)</span><span id="res-engr-i" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>RPM de Saída</span><span id="res-engr-rpm" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Diâm. Primitivo Motora</span><span id="res-engr-d1" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Diâm. Primitivo Movida</span><span id="res-engr-d2" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Potência Transmitida</span><span id="res-engr-pot" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Torque na Saída</span><span id="res-engr-torque" class="calc-result-value">—</span></div>
+                </div>
+            </section>
+
+            <!-- Step 3: Correntes -->
+            <section class="calc-step-panel" id="calc-step-3">
+                <div class="calc-step-header">
+                    <h2>⚙ Correntes com Engrenagens Dentadas</h2>
+                    <p class="calc-step-desc">Dados da transmissão por corrente e dos rolamentos dos eixos.</p>
+                </div>
+                <div class="calc-form-grid">
+                    <div class="calc-form-group">
+                        <label for="corr-z1">Nº Dentes Motora (Z₁)</label>
+                        <div class="calc-input-wrap">
+                            <input type="number" id="corr-z1" step="1" min="1" placeholder="0">
+                            <span class="calc-unit">dentes</span>
+                        </div>
+                    </div>
+                    <div class="calc-form-group">
+                        <label for="corr-z2">Nº Dentes Movida (Z₂)</label>
+                        <div class="calc-input-wrap">
+                            <input type="number" id="corr-z2" step="1" min="1" placeholder="0">
+                            <span class="calc-unit">dentes</span>
+                        </div>
+                    </div>
+                    <div class="calc-form-group">
+                        <label for="corr-passo">Passo da Corrente (p)</label>
+                        <div class="calc-input-wrap">
+                            <input type="number" id="corr-passo" step="0.01" min="0" placeholder="0.0">
+                            <span class="calc-unit">mm</span>
+                        </div>
+                    </div>
+                    <div class="calc-form-group">
+                        <label for="corr-rendimento">Rendimento da Corrente</label>
+                        <div class="calc-input-wrap">
+                            <input type="number" id="corr-rendimento" step="0.1" min="0" max="100" placeholder="97" value="97">
+                            <span class="calc-unit">%</span>
+                        </div>
+                    </div>
+                    <div class="calc-form-group">
+                        <label for="corr-rolamento">Tipo de Rolamento</label>
+                        <div class="calc-input-wrap">
+                            <select id="corr-rolamento"></select>
+                        </div>
+                    </div>
+                </div>
+                <div class="calc-results-box">
+                    <h3>📊 Resultados Parciais</h3>
+                    <div class="calc-result-row"><span>Relação de Transmissão (i)</span><span id="res-corr-i" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>RPM de Saída</span><span id="res-corr-rpm" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Diâm. Primitivo Motora</span><span id="res-corr-d1" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Diâm. Primitivo Movida</span><span id="res-corr-d2" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Potência Transmitida</span><span id="res-corr-pot" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Torque na Saída</span><span id="res-corr-torque" class="calc-result-value">—</span></div>
+                </div>
+            </section>
+
+            <!-- Step 4: Redutor -->
+            <section class="calc-step-panel" id="calc-step-4">
+                <div class="calc-step-header">
+                    <h2>⚙ Redutor</h2>
+                    <p class="calc-step-desc">Dados do redutor de velocidade.</p>
+                </div>
+                <div class="calc-form-grid">
+                    <div class="calc-form-group">
+                        <label for="red-relacao">Relação de Transmissão (i)</label>
+                        <div class="calc-input-wrap">
+                            <input type="number" id="red-relacao" step="0.1" min="0" placeholder="0.0">
+                            <span class="calc-unit">:1</span>
+                        </div>
+                    </div>
+                    <div class="calc-form-group">
+                        <label for="red-rendimento">Rendimento do Redutor</label>
+                        <div class="calc-input-wrap">
+                            <input type="number" id="red-rendimento" step="0.1" min="0" max="100" placeholder="90" value="90">
+                            <span class="calc-unit">%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="calc-results-box">
+                    <h3>📊 Resultados Parciais</h3>
+                    <div class="calc-result-row"><span>RPM de Saída</span><span id="res-red-rpm" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Potência na Saída</span><span id="res-red-pot" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Torque na Saída</span><span id="res-red-torque" class="calc-result-value">—</span></div>
+                </div>
+            </section>
+
+            <!-- Step 5: Resumo -->
+            <section class="calc-step-panel" id="calc-step-5">
+                <div class="calc-step-header">
+                    <h2>📋 Resumo Geral</h2>
+                    <p class="calc-step-desc">Visão completa da cadeia de transmissão com todos os resultados.</p>
+                </div>
+                <div class="calc-summary-content" id="calc-summary-content"></div>
+                <div class="calc-summary-footer">
+                    <button class="calc-btn-report" disabled>📄 Gerar Relatório (Em breve)</button>
+                </div>
+            </section>
+        </div>
+
+        <!-- Navigation -->
+        <div class="calc-nav">
+            <button id="calc-prev-btn" class="calc-btn calc-btn-prev" onclick="CalcWizard.prevStep()" style="visibility: hidden;">← Anterior</button>
+            <span class="calc-step-indicator" id="calc-step-indicator">Etapa 1 de 6</span>
+            <button id="calc-next-btn" class="calc-btn calc-btn-next" onclick="CalcWizard.nextStep()">Próximo →</button>
+        </div>
     </main>
 
     <main id="controle" class="page" style="display: none;">
