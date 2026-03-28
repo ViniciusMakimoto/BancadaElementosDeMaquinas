@@ -578,6 +578,105 @@ const CalcWizard = {
         this._buildingSummary = false;
     },
 
+    // --- RELATÓRIO (PRINT) ---
+    printReport() {
+        this._buildingSummary = true;
+        this.recalculateFrom(0);
+        this._buildingSummary = false;
+
+        const names = ['Motor', 'Polias e Correia', 'Engrenagens', 'Correntes', 'Redutor'];
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR');
+
+        let gEff = 1;
+        this.outputs.forEach(o => { gEff *= o.efficiency; });
+        const last = this.outputs[4];
+
+        let r = '<div id="print-report">';
+        r += '<h1>Relatório — Bancada Didática de Elementos de Máquina</h1>';
+        r += '<p class="print-subtitle">Gerado em: ' + dateStr + '</p>';
+
+        // Globals
+        r += '<div class="print-globals">';
+        r += '<div class="print-global-item"><span class="label">Rendimento Global</span><span class="value">' + this.fmt(gEff * 100, 1) + '%</span></div>';
+        r += '<div class="print-global-item"><span class="label">Potência Final</span><span class="value">' + this.fmt(last.powerOut, 3) + ' kW</span></div>';
+        r += '<div class="print-global-item"><span class="label">RPM Final</span><span class="value">' + this.fmt(last.rpmOut, 1) + '</span></div>';
+        r += '<div class="print-global-item"><span class="label">Torque Final</span><span class="value">' + this.fmt(last.torque, 2) + ' N·m</span></div>';
+        r += '</div>';
+
+        // Input data per stage
+        r += '<div class="print-section"><h2>Dados de Entrada</h2>';
+        r += '<table class="print-input-table"><thead><tr><th>Estágio</th><th>Parâmetro</th><th>Valor</th></tr></thead><tbody>';
+
+        const inputs = [
+            { stage: 'Motor', params: [
+                ['Potência Nominal', this.getVal('motor-potencia') + ' CV'],
+                ['Frequência Inversor', this.getVal('motor-frequencia') + ' Hz'],
+                ['Nº Polos', this.getVal('motor-polos')],
+                ['Escorregamento', this.getVal('motor-slip') + '%'],
+                ['Rendimento', this.getVal('motor-rendimento') + '%'],
+            ]},
+            { stage: 'Polias e Correia', params: [
+                ['Diâm. Polia Motora (D₁)', this.getVal('polia-d1') + ' mm'],
+                ['Diâm. Polia Movida (D₂)', this.getVal('polia-d2') + ' mm'],
+                ['Rendimento', this.getVal('polia-rendimento') + '%'],
+            ]},
+            { stage: 'Engrenagens', params: [
+                ['Nº Dentes Motora (Z₁)', this.getVal('engr-z1')],
+                ['Nº Dentes Movida (Z₂)', this.getVal('engr-z2')],
+                ['Módulo (m)', this.getVal('engr-modulo') + ' mm'],
+                ['Rendimento Par', this.getVal('engr-rendimento') + '%'],
+                ['Rolamento', document.getElementById('engr-rolamento').selectedOptions[0]?.text || '—'],
+            ]},
+            { stage: 'Correntes', params: [
+                ['Nº Dentes Motora (Z₁)', this.getVal('corr-z1')],
+                ['Nº Dentes Movida (Z₂)', this.getVal('corr-z2')],
+                ['Passo (p)', this.getVal('corr-passo') + ' mm'],
+                ['Rendimento', this.getVal('corr-rendimento') + '%'],
+                ['Rolamento', document.getElementById('corr-rolamento').selectedOptions[0]?.text || '—'],
+            ]},
+            { stage: 'Redutor', params: [
+                ['Relação (i)', this.getVal('red-relacao') + ':1'],
+                ['Rendimento', this.getVal('red-rendimento') + '%'],
+            ]},
+        ];
+
+        inputs.forEach(s => {
+            s.params.forEach((p, i) => {
+                r += '<tr>';
+                if (i === 0) r += '<td rowspan="' + s.params.length + '">' + s.stage + '</td>';
+                r += '<td>' + p[0] + '</td><td>' + p[1] + '</td></tr>';
+            });
+        });
+        r += '</tbody></table></div>';
+
+        // Results table
+        r += '<div class="print-section"><h2>Resultados por Estágio</h2>';
+        r += '<table><thead><tr><th>Estágio</th><th>RPM Ent.</th><th>RPM Saída</th><th>Pot. Ent. (kW)</th><th>Pot. Saída (kW)</th><th>Torque (N·m)</th><th>η</th><th>Relação</th></tr></thead><tbody>';
+        this.outputs.forEach((o, i) => {
+            r += '<tr>';
+            r += '<td>' + names[i] + '</td>';
+            r += '<td>' + (i === 0 ? '—' : this.fmt(o.rpmIn, 1)) + '</td>';
+            r += '<td>' + this.fmt(o.rpmOut, 1) + '</td>';
+            r += '<td>' + this.fmt(o.powerIn, 3) + '</td>';
+            r += '<td>' + this.fmt(o.powerOut, 3) + '</td>';
+            r += '<td>' + this.fmt(o.torque, 2) + '</td>';
+            r += '<td>' + this.fmt(o.efficiency * 100, 1) + '%</td>';
+            r += '<td>' + (i === 0 ? '—' : this.fmt(o.ratio, 2) + ':1') + '</td>';
+            r += '</tr>';
+        });
+        r += '</tbody></table></div>';
+
+        r += '<p class="print-footer">Bancada Didática de Elementos de Máquina — Relatório gerado automaticamente</p>';
+        r += '</div>';
+
+        // Inject, print, remove
+        const div = document.createElement('div');
+        div.innerHTML = r;
+        document.body.appendChild(div);
+        window.print();
+        document.body.removeChild(div);
+    },
     // --- NAVEGAÇÃO ---
     goToStep(step) {
         if (step < 0 || step >= this.totalSteps) return;

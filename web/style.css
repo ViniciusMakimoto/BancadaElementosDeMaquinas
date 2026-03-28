@@ -814,12 +814,143 @@ input[type=range] {
 
 .calc-btn-report {
     padding: 12px 32px;
-    background: var(--card-bg);
-    color: #666;
-    border: 1px dashed var(--border-color);
+    background: var(--accent-color);
+    color: var(--bg-color);
+    border: none;
     border-radius: 6px;
     font-size: 0.9rem;
-    cursor: not-allowed;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.calc-btn-report:hover {
+    box-shadow: 0 0 16px rgba(0, 255, 157, 0.3);
+    transform: translateY(-1px);
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+    /* Hide everything except the print report */
+    body * {
+        visibility: hidden;
+    }
+
+    .calc-nav,
+    .calc-stepper,
+    .calc-summary-footer {
+        display: none !important;
+    }
+
+    #print-report,
+    #print-report * {
+        visibility: visible;
+    }
+
+    #print-report {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: white;
+        color: #222;
+        padding: 10px;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        font-size: 10pt;
+        box-sizing: border-box;
+    }
+
+    #print-report h1 {
+        font-size: 16pt;
+        text-align: center;
+        margin-bottom: 4px;
+        color: #111;
+    }
+
+    #print-report .print-subtitle {
+        text-align: center;
+        color: #666;
+        font-size: 10pt;
+        margin-bottom: 20px;
+    }
+
+    #print-report .print-section {
+        margin-bottom: 16px;
+    }
+
+    #print-report .print-section h2 {
+        font-size: 12pt;
+        border-bottom: 2px solid #333;
+        padding-bottom: 4px;
+        margin-bottom: 8px;
+        color: #111;
+    }
+
+    #print-report table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 9pt;
+        margin-bottom: 12px;
+        table-layout: fixed;
+        word-wrap: break-word;
+    }
+
+    #print-report th {
+        background: #eee;
+        border: 1px solid #ccc;
+        padding: 4px 5px;
+        text-align: center;
+        font-weight: 600;
+    }
+
+    #print-report td {
+        border: 1px solid #ccc;
+        padding: 4px 5px;
+        text-align: center;
+    }
+
+    #print-report .print-globals {
+        display: flex;
+        gap: 24px;
+        justify-content: center;
+        margin-bottom: 16px;
+    }
+
+    #print-report .print-global-item {
+        text-align: center;
+    }
+
+    #print-report .print-global-item .label {
+        font-size: 9pt;
+        color: #666;
+        display: block;
+    }
+
+    #print-report .print-global-item .value {
+        font-size: 14pt;
+        font-weight: bold;
+        color: #111;
+    }
+
+    #print-report .print-footer {
+        margin-top: 30px;
+        font-size: 9pt;
+        color: #999;
+        text-align: center;
+    }
+
+    #print-report .print-input-table td[rowspan] {
+        text-align: left;
+        font-weight: 600;
+    }
+
+    #print-report .print-input-table td {
+        text-align: left;
+    }
+
+    #print-report .print-input-table td:last-child {
+        text-align: center;
+    }
 }
 
 /* Responsive */
