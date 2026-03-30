@@ -3,9 +3,9 @@
 #include <IPAddress.h>
 
 // --- Settings ---
-static const uint16_t SENSOR_UPDATE_RATE = 1000;
-static const uint16_t SENSOR_DEBOUNCE = 5;
 #define PULSES_PER_REVOLUTION 2
+static const uint16_t SENSOR_UPDATE_RATE = 1000;
+static const uint16_t SENSOR_DEBOUNCE = 30 / PULSES_PER_REVOLUTION;
 
 static const uint16_t JSON_UPDATE_RATE = 500;
 
@@ -15,8 +15,8 @@ static const uint16_t INVERTER_UPDATE_RATE = 1000;
 #define OPERATOR_PIN "0000"
 
 // --- Modo de Simulação ---
-#define SENSOR_SIMULATION_ENABLED true
-#define WEG_INVERTER_SIMULATION_ENABLED true
+#define SENSOR_SIMULATION_ENABLED false
+#define WEG_INVERTER_SIMULATION_ENABLED false
 
 // --- Wi-Fi & Rede ---
 // Descomente a linha abaixo para usar o modo Access Point (AP)
@@ -35,8 +35,8 @@ static const IPAddress SUBNET(255, 255, 255, 0);
 // Sensores Indutivos
 #define PIN_RPM_1 18
 #define PIN_RPM_2 19
-#define PIN_RPM_3 21
-#define PIN_RPM_4 22
+#define PIN_RPM_3 22
+#define PIN_RPM_4 21
 
 // Modbus RS485
 #define PIN_RS485_RX 16
