@@ -2,10 +2,14 @@
    CONFIGURAÇÕES GERAIS
 ================================ */
 const REQUEST_RATE = 1000; // ms: Taxa de atualização de dados do ESP32
-const MOCK_SENSORS = true;
-const MOCK_LOGIN = true;
+const MOCK_SENSORS = false;
+const MOCK_LOGIN = false;
 let rpmChart;
-let operatorPin = null;
+
+// --- Estado de autenticação ---
+let operatorPin = null; // PIN salvo após login (op ou admin)
+let adminPin = null; // PIN específico do admin
+let userRole = null; // 'operator' | 'admin' | null
 
 window.onload = () => {
     initChart();
@@ -28,8 +32,20 @@ window.onload = () => {
     });
 
     // Listener para ENVIAR O COMANDO quando o usuário soltar o slider
-    document.getElementById('freqSlider').addEventListener('change', (e) => {
+    document.getElementById('freqSlider').addEventListener('change', () => {
         sendInverterCommand(); // Envia só a frequência
+    });
+
+    // Listener Enter no campo de PIN
+    document.getElementById('pinInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') checkAuth();
+    });
+
+    // Listeners da aba de configurações: detectar mudanças em campos de rede
+    const networkFields = ['cfg-ssid', 'cfg-wifi-pass', 'cfg-local-ip', 'cfg-gateway', 'cfg-subnet', 'cfg-use-ap'];
+    networkFields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', showNetworkChangeBanner);
     });
 };
 
@@ -276,72 +292,362 @@ function updateInterface(data) {
 
 function openModal() {
     document.getElementById('loginModal').style.display = 'flex';
+    document.getElementById('pinInput').value = '';
+    document.getElementById('pinError').style.display = 'none';
+    setTimeout(() => document.getElementById('pinInput').focus(), 100);
 }
 
 function closeModal() {
     document.getElementById('loginModal').style.display = 'none';
-    document.getElementById('pinInput').value = ""; // Limpa o PIN
+    document.getElementById('pinInput').value = '';
+    document.getElementById('pinError').style.display = 'none';
 }
 
 async function checkAuth() {
-    const pin = document.getElementById('pinInput').value;
+    const pin = document.getElementById('pinInput').value.trim();
+    const errorEl = document.getElementById('pinError');
 
-    if (!pin || pin.length !== 4) {
-        alert("PIN deve ter 4 dígitos.");
+    if (!pin || pin.length < 4) {
+        errorEl.textContent = 'PIN deve ter no mínimo 4 dígitos.';
+        errorEl.style.display = 'block';
         return;
     }
 
     if (MOCK_LOGIN) {
-        loginOperator();
+        // Simula: PIN 9999 = admin, qualquer outro = operator
+        const role = (pin === '9999') ? 'admin' : 'operator';
+        applyLogin(pin, role);
         closeModal();
         return;
     }
 
+    const submitBtn = document.getElementById('loginSubmitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Verificando...';
 
     try {
-        const response = await fetch('/api/auth', {
+        const res = await fetch('/api/auth', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pin: pin })
+            body: JSON.stringify({ pin })
         });
+        const data = await res.json();
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || `PIN inválido`);
+        if (!res.ok) {
+            errorEl.textContent = data.error || 'PIN inválido.';
+            errorEl.style.display = 'block';
+            document.getElementById('pinInput').value = '';
+            return;
         }
 
-        // PIN Válido!
-        operatorPin = pin;
-        loginOperator();
+        applyLogin(pin, data.role);
         closeModal();
-        console.log("Autenticação bem-sucedida!");
+        console.log(`[AUTH] Login com sucesso. Papel: ${data.role}`);
 
-    } catch (error) {
-        console.error("Falha na autenticação:", error);
-        alert(`Erro de Autenticação: ${error.message}`);
-        // Limpa o campo do PIN e mantém o modal aberto para nova tentativa
-        document.getElementById('pinInput').value = "";
+    } catch (err) {
+        errorEl.textContent = `Erro de comunicação: ${err.message}`;
+        errorEl.style.display = 'block';
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Entrar';
+    }
+}
+
+/**
+ * Aplica o estado de login com base no papel retornado pelo ESP32.
+ * Admin herda automaticamente os privilégios de operador.
+ */
+function applyLogin(pin, role) {
+    userRole = role;
+    operatorPin = pin; // Ambos os níveis têm acesso a comandos
+
+    if (role === 'admin') {
+        adminPin = pin;
+        loginAdmin();
+    } else {
+        adminPin = null;
+        loginOperator();
     }
 }
 
 function loginOperator() {
+    // Mostra aba Controle
+    document.getElementById('nav-controle').style.display = 'inline';
     document.getElementById('operatorControl').classList.remove('hidden');
-    document.getElementById('loginBtn').innerText = "Logout";
-    document.getElementById('loginBtn').setAttribute('onclick', 'logoutOperator()');
-    document.querySelector('a[href="#controle"]').style.display = 'inline';
+
+    // Atualiza botão de login com badge de operador
+    const btn = document.getElementById('loginBtn');
+    btn.innerHTML = '<span class="badge-op">●</span> Operador';
+    btn.className = 'login-btn login-btn-operator';
+    btn.setAttribute('onclick', 'logoutOperator()');
+}
+
+function loginAdmin() {
+    // Herda privilégios de operador
+    loginOperator();
+
+    // Mostra aba Configurações
+    const navConfig = document.getElementById('nav-config');
+    navConfig.style.display = 'inline';
+
+    // Atualiza badge para admin
+    const btn = document.getElementById('loginBtn');
+    btn.innerHTML = '<span class="badge-adm">★</span> Admin';
+    btn.className = 'login-btn login-btn-admin';
+    btn.setAttribute('onclick', 'logoutOperator()');
+
+    // Carrega configurações do ESP32
+    loadConfig();
 }
 
 function logoutOperator() {
-    operatorPin = null; // Limpa o PIN
+    operatorPin = null;
+    adminPin = null;
+    userRole = null;
+
+    // Esconde abas protegidas
+    document.getElementById('nav-controle').style.display = 'none';
+    document.getElementById('nav-config').style.display = 'none';
     document.getElementById('operatorControl').classList.add('hidden');
-    document.getElementById('loginBtn').innerText = "Login Operador";
-    document.getElementById('loginBtn').setAttribute('onclick', 'openModal()');
-    // Esconde o link de navegação para a página de controle
-    document.querySelector('a[href="#controle"]').style.display = 'none';
-    // Opcional: Redireciona para o dashboard se estiver na página de controle
-    if (document.querySelector('#controle').style.display === 'block') {
+
+    // Reseta badge
+    const btn = document.getElementById('loginBtn');
+    btn.innerHTML = 'Login';
+    btn.className = 'login-btn';
+    btn.setAttribute('onclick', 'openModal()');
+
+    // Volta para dashboard se estiver em página protegida
+    const current = document.querySelector('.page[style*="block"]');
+    if (current && (current.id === 'controle' || current.id === 'configuracoes')) {
         document.querySelector('a[href="#dashboard"]').click();
     }
+}
+
+
+/* ================================
+   CONFIGURAÇÕES (ADMIN)
+================================ */
+
+/**
+ * Carrega configurações do ESP32 e popula o formulário.
+ */
+async function loadConfig() {
+    if (!adminPin) return;
+
+    if (MOCK_LOGIN) {
+        // Mock de configurações para desenvolvimento
+        const mockCfg = {
+            operatorPin: '0000',
+            adminPin: '9999',
+            pulsesPerRevolution: 2,
+            sensorUpdateRate: 1000,
+            sensorDebounceBase: 15,
+            sensorSimEnabled: false,
+            jsonUpdateRate: 500,
+            inverterUpdateRate: 1000,
+            inverterSimEnabled: false,
+            modbusBaudRate: 9600,
+            modbusSlaveId: 1,
+            useAP: true,
+            ssid: 'Bancada_EM',
+            wifiPass: '***',
+            localIp: '192.168.4.1',
+            gateway: '192.168.4.1',
+            subnet: '255.255.255.0'
+        };
+        populateConfigForm(mockCfg);
+        return;
+    }
+
+    try {
+        const res = await fetch(`/api/config?admin_pin=${encodeURIComponent(adminPin)}`);
+        if (!res.ok) {
+            const err = await res.json();
+            console.error('[CFG] Falha ao carregar configurações:', err.error);
+            return;
+        }
+        const cfg = await res.json();
+        populateConfigForm(cfg);
+    } catch (err) {
+        console.error('[CFG] Erro ao buscar configurações:', err);
+    }
+}
+
+/**
+ * Preenche o formulário de configurações com os valores recebidos.
+ */
+function populateConfigForm(cfg) {
+    const set = (id, val) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (el.type === 'checkbox') el.checked = !!val;
+        else if (el.tagName === 'SELECT') el.value = String(val);
+        else el.value = (val !== undefined && val !== null) ? val : '';
+    };
+
+    // Segurança (PINs exibidos como vazio por padrão por segurança)
+    set('cfg-op-pin', '');
+    set('cfg-adm-pin', '');
+
+    // Sensores
+    set('cfg-ppr', cfg.pulsesPerRevolution);
+    set('cfg-sens-rate', cfg.sensorUpdateRate);
+    set('cfg-sens-deb', cfg.sensorDebounceBase);
+    set('cfg-sim-sens', cfg.sensorSimEnabled);
+
+    // API
+    set('cfg-json-rate', cfg.jsonUpdateRate);
+
+    // Inversor
+    set('cfg-inv-rate', cfg.inverterUpdateRate);
+    set('cfg-mb-baud', cfg.modbusBaudRate);
+    set('cfg-mb-slave', cfg.modbusSlaveId);
+    set('cfg-sim-inv', cfg.inverterSimEnabled);
+
+    // Rede
+    set('cfg-use-ap', cfg.useAP);
+    set('cfg-ssid', cfg.ssid);
+    set('cfg-wifi-pass', ''); // Nunca pré-preenche senha
+    set('cfg-local-ip', cfg.localIp);
+    set('cfg-gateway', cfg.gateway);
+    set('cfg-subnet', cfg.subnet);
+
+    // Esconde banner de rede ao carregar
+    document.getElementById('network-change-banner').style.display = 'none';
+    document.getElementById('configSaveStatus').textContent = '';
+}
+
+/**
+ * Coleta o formulário e envia POST /api/config.
+ */
+async function saveConfig() {
+    if (!adminPin) return;
+
+    const get = (id) => document.getElementById(id)?.value ?? '';
+    const getNum = (id) => parseFloat(get(id)) || 0;
+    const getInt = (id) => parseInt(get(id)) || 0;
+    const getBool = (id) => document.getElementById(id)?.checked ?? false;
+
+    // Monta objeto de configuração (só inclui PINs se foram preenchidos)
+    const config = {
+        pulsesPerRevolution: getInt('cfg-ppr'),
+        sensorUpdateRate: getInt('cfg-sens-rate'),
+        sensorDebounceBase: getInt('cfg-sens-deb'),
+        sensorSimEnabled: getBool('cfg-sim-sens'),
+        jsonUpdateRate: getInt('cfg-json-rate'),
+        inverterUpdateRate: getInt('cfg-inv-rate'),
+        inverterSimEnabled: getBool('cfg-sim-inv'),
+        modbusBaudRate: getInt('cfg-mb-baud'),
+        modbusSlaveId: getInt('cfg-mb-slave'),
+        useAP: getBool('cfg-use-ap'),
+        ssid: get('cfg-ssid'),
+        wifiPass: get('cfg-wifi-pass'), // string vazia = não altera no backend
+        localIp: get('cfg-local-ip'),
+        gateway: get('cfg-gateway'),
+        subnet: get('cfg-subnet'),
+    };
+
+    // PINs: só inclui se foram digitados
+    const opPin = get('cfg-op-pin').trim();
+    const admPin = get('cfg-adm-pin').trim();
+    if (opPin.length >= 4) config.operatorPin = opPin;
+    if (admPin.length >= 4) config.adminPin = admPin;
+
+    const statusEl = document.getElementById('configSaveStatus');
+    const saveBtn = document.getElementById('saveConfigBtn');
+    statusEl.textContent = '';
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Salvando...';
+
+    if (MOCK_LOGIN) {
+        await new Promise(r => setTimeout(r, 600));
+        statusEl.textContent = '✅ Configurações salvas (modo simulado)';
+        statusEl.className = 'config-save-status status-ok';
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 Salvar Configurações';
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ admin_pin: adminPin, config })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            statusEl.textContent = `❌ Erro: ${data.error}`;
+            statusEl.className = 'config-save-status status-err';
+            return;
+        }
+
+        statusEl.textContent = '✅ Salvo com sucesso!';
+        statusEl.className = 'config-save-status status-ok';
+
+        if (data.restart_required) {
+            document.getElementById('network-change-banner').style.display = 'flex';
+            document.getElementById('restartModal').style.display = 'flex';
+        } else {
+            document.getElementById('network-change-banner').style.display = 'none';
+        }
+
+    } catch (err) {
+        statusEl.textContent = `❌ Falha: ${err.message}`;
+        statusEl.className = 'config-save-status status-err';
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 Salvar Configurações';
+    }
+}
+
+/**
+ * Envia POST /api/restart para reiniciar o ESP32.
+ */
+async function restartEsp() {
+    if (!adminPin) return;
+
+    if (MOCK_LOGIN) {
+        alert('Simulação: ESP32 seria reiniciado agora.');
+        closeRestartModal();
+        return;
+    }
+
+    try {
+        await fetch('/api/restart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ admin_pin: adminPin })
+        });
+        closeRestartModal();
+        // Informa o usuário que vai perder conexão
+        document.getElementById('configSaveStatus').textContent = '🔄 Reiniciando... reconecte em alguns segundos.';
+        document.getElementById('configSaveStatus').className = 'config-save-status status-warn';
+    } catch (err) {
+        console.error('[SYS] Erro ao reiniciar:', err);
+    }
+}
+
+function closeRestartModal() {
+    document.getElementById('restartModal').style.display = 'none';
+}
+
+/**
+ * Mostra o banner de aviso de rede quando campos de rede são editados.
+ */
+function showNetworkChangeBanner() {
+    document.getElementById('network-change-banner').style.display = 'flex';
+}
+
+/**
+ * Alterna abertura/fechamento de grupo de configurações.
+ */
+function toggleConfigGroup(header) {
+    const body = header.nextElementSibling;
+    const arrow = header.querySelector('.config-group-arrow');
+    const isOpen = body.style.display !== 'none' && body.style.display !== '';
+    body.style.display = isOpen ? 'none' : 'grid';
+    arrow.style.transform = isOpen ? 'rotate(-90deg)' : 'rotate(0deg)';
 }
 
 /* ================================
@@ -609,36 +915,46 @@ const CalcWizard = {
         r += '<table class="print-input-table"><thead><tr><th>Estágio</th><th>Parâmetro</th><th>Valor</th></tr></thead><tbody>';
 
         const inputs = [
-            { stage: 'Motor', params: [
-                ['Potência Nominal', this.getVal('motor-potencia') + ' CV'],
-                ['Frequência Inversor', this.getVal('motor-frequencia') + ' Hz'],
-                ['Nº Polos', this.getVal('motor-polos')],
-                ['Escorregamento', this.getVal('motor-slip') + '%'],
-                ['Rendimento', this.getVal('motor-rendimento') + '%'],
-            ]},
-            { stage: 'Polias e Correia', params: [
-                ['Diâm. Polia Motora (D₁)', this.getVal('polia-d1') + ' mm'],
-                ['Diâm. Polia Movida (D₂)', this.getVal('polia-d2') + ' mm'],
-                ['Rendimento', this.getVal('polia-rendimento') + '%'],
-            ]},
-            { stage: 'Engrenagens', params: [
-                ['Nº Dentes Motora (Z₁)', this.getVal('engr-z1')],
-                ['Nº Dentes Movida (Z₂)', this.getVal('engr-z2')],
-                ['Módulo (m)', this.getVal('engr-modulo') + ' mm'],
-                ['Rendimento Par', this.getVal('engr-rendimento') + '%'],
-                ['Rolamento', document.getElementById('engr-rolamento').selectedOptions[0]?.text || '—'],
-            ]},
-            { stage: 'Correntes', params: [
-                ['Nº Dentes Motora (Z₁)', this.getVal('corr-z1')],
-                ['Nº Dentes Movida (Z₂)', this.getVal('corr-z2')],
-                ['Passo (p)', this.getVal('corr-passo') + ' mm'],
-                ['Rendimento', this.getVal('corr-rendimento') + '%'],
-                ['Rolamento', document.getElementById('corr-rolamento').selectedOptions[0]?.text || '—'],
-            ]},
-            { stage: 'Redutor', params: [
-                ['Relação (i)', this.getVal('red-relacao') + ':1'],
-                ['Rendimento', this.getVal('red-rendimento') + '%'],
-            ]},
+            {
+                stage: 'Motor', params: [
+                    ['Potência Nominal', this.getVal('motor-potencia') + ' CV'],
+                    ['Frequência Inversor', this.getVal('motor-frequencia') + ' Hz'],
+                    ['Nº Polos', this.getVal('motor-polos')],
+                    ['Escorregamento', this.getVal('motor-slip') + '%'],
+                    ['Rendimento', this.getVal('motor-rendimento') + '%'],
+                ]
+            },
+            {
+                stage: 'Polias e Correia', params: [
+                    ['Diâm. Polia Motora (D₁)', this.getVal('polia-d1') + ' mm'],
+                    ['Diâm. Polia Movida (D₂)', this.getVal('polia-d2') + ' mm'],
+                    ['Rendimento', this.getVal('polia-rendimento') + '%'],
+                ]
+            },
+            {
+                stage: 'Engrenagens', params: [
+                    ['Nº Dentes Motora (Z₁)', this.getVal('engr-z1')],
+                    ['Nº Dentes Movida (Z₂)', this.getVal('engr-z2')],
+                    ['Módulo (m)', this.getVal('engr-modulo') + ' mm'],
+                    ['Rendimento Par', this.getVal('engr-rendimento') + '%'],
+                    ['Rolamento', document.getElementById('engr-rolamento').selectedOptions[0]?.text || '—'],
+                ]
+            },
+            {
+                stage: 'Correntes', params: [
+                    ['Nº Dentes Motora (Z₁)', this.getVal('corr-z1')],
+                    ['Nº Dentes Movida (Z₂)', this.getVal('corr-z2')],
+                    ['Passo (p)', this.getVal('corr-passo') + ' mm'],
+                    ['Rendimento', this.getVal('corr-rendimento') + '%'],
+                    ['Rolamento', document.getElementById('corr-rolamento').selectedOptions[0]?.text || '—'],
+                ]
+            },
+            {
+                stage: 'Redutor', params: [
+                    ['Relação (i)', this.getVal('red-relacao') + ':1'],
+                    ['Rendimento', this.getVal('red-rendimento') + '%'],
+                ]
+            },
         ];
 
         inputs.forEach(s => {

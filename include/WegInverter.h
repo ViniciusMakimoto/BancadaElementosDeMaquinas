@@ -25,7 +25,7 @@ private:
     const char *getStatusString();
 
 public:
-    WegInverter(uint8_t slaveId);
+    WegInverter();
     void begin(int rxPin, int txPin);
     void update();
     void getInverterDataJson(JsonDocument &doc);

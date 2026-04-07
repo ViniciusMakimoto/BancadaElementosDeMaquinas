@@ -1,72 +1,78 @@
 #include "WegInverter.h"
+#include "AppConfig.h"
 
-WegInverter::WegInverter(uint8_t slaveId) : _slaveId(slaveId),
-                                            _status(STOPPED),
-                                            _currentFrequency(0.0),
-                                            _lastUpdateTime(0)
+WegInverter::WegInverter() : _status(STOPPED),
+                             _currentFrequency(0.0),
+                             _lastUpdateTime(0)
 {
 }
 
 void WegInverter::begin(int rxPin, int txPin)
 {
-#if WEG_INVERTER_SIMULATION_ENABLED
-    Serial.println("[WEG] Inversor inicializado (Simulado)");
-#else
-    Serial2.begin(MODBUS_BAUDRATE, SERIAL_8N1, rxPin, txPin);
-    node.begin(_slaveId, Serial2);
+    if (appConfigMgr.config.inverterSimEnabled)
+    {
+        DEBUG_PRINTLN("[WEG] Inversor inicializado (Simulado)");
+    }
+    else
+    {
+        Serial2.begin(appConfigMgr.config.modbusBaudRate, SERIAL_8N1, rxPin, txPin);
+        node.begin(appConfigMgr.config.modbusSlaveId, Serial2);
 
-    Serial.println("[WEG] Inversor inicializado");
-#endif
+        DEBUG_PRINTLN("[WEG] Inversor inicializado");
+    }
 }
 
 void WegInverter::update()
 {
-#if WEG_INVERTER_SIMULATION_ENABLED
-    taskENTER_CRITICAL(&inverterMutex);
-    // A lógica de simulação contínua (rampa) foi removida para simplificar.
-    // A frequência agora é alterada diretamente por setFrequency.
-    // Se o inversor estiver parado, a frequência é zerada.
-    if (_status == STOPPED)
+    if (appConfigMgr.config.inverterSimEnabled)
     {
-        _currentFrequency = 0.0;
-    }
-    taskEXIT_CRITICAL(&inverterMutex);
-#else
-    // Debounce para não sobrecarregar a comunicação Modbus
-    if (millis() - _lastUpdateTime < INVERTER_UPDATE_RATE)
-    {
-        return;
-    }
-    _lastUpdateTime = millis();
-
-    uint8_t result;
-    // Exemplo: Lendo a frequência do inversor (ajustar registradores)
-    result = node.readHoldingRegisters(REG_READ_FREQUENCY, 1);
-
-    taskENTER_CRITICAL(&inverterMutex);
-    if (result == node.ku8MBSuccess)
-    {
-        // O valor do inversor é de 0 a 600, que corresponde a 0-60Hz
-        _currentFrequency = node.getResponseBuffer(0) / 10;
-
-        // Por simplicidade, se a frequência > 0.1, está girando.
-        if (_currentFrequency > 0.1)
+        taskENTER_CRITICAL(&inverterMutex);
+        // A lógica de simulação contínua (rampa) foi removida para simplificar.
+        // A frequência agora é alterada diretamente por setFrequency.
+        // Se o inversor estiver parado, a frequência é zerada.
+        if (_status == STOPPED)
         {
-            _status = RUNNING;
+            _currentFrequency = 0.0;
         }
-        else
-        {
-            _status = STOPPED;
-        }
+        taskEXIT_CRITICAL(&inverterMutex);
     }
     else
     {
-        _status = FAULT; // Falha na comunicação
-        _currentFrequency = 0;
-        Serial.println("[WEG] Falha ao ler dados do inversor.");
+        // Debounce para não sobrecarregar a comunicação Modbus
+        if (millis() - _lastUpdateTime < appConfigMgr.config.inverterUpdateRate)
+        {
+            return;
+        }
+        _lastUpdateTime = millis();
+
+        uint8_t result;
+        // Exemplo: Lendo a frequência do inversor (ajustar registradores)
+        result = node.readHoldingRegisters(REG_READ_FREQUENCY, 1);
+
+        taskENTER_CRITICAL(&inverterMutex);
+        if (result == node.ku8MBSuccess)
+        {
+            // O valor do inversor é de 0 a 600, que corresponde a 0-60Hz
+            _currentFrequency = node.getResponseBuffer(0) / 10.0;
+
+            // Por simplicidade, se a frequência > 0.1, está girando.
+            if (_currentFrequency > 0.1)
+            {
+                _status = RUNNING;
+            }
+            else
+            {
+                _status = STOPPED;
+            }
+        }
+        else
+        {
+            _status = FAULT; // Falha na comunicação
+            _currentFrequency = 0;
+            DEBUG_PRINTLN("[WEG] Falha ao ler dados do inversor.");
+        }
+        taskEXIT_CRITICAL(&inverterMutex);
     }
-    taskEXIT_CRITICAL(&inverterMutex);
-#endif
 }
 
 void WegInverter::getInverterDataJson(JsonDocument &doc)
@@ -79,62 +85,70 @@ void WegInverter::getInverterDataJson(JsonDocument &doc)
 
 void WegInverter::setFrequency(float hz)
 {
-#if WEG_INVERTER_SIMULATION_ENABLED
-    taskENTER_CRITICAL(&inverterMutex);
-    if (hz >= 0 && hz <= 60) // Limita a frequência
+    if (appConfigMgr.config.inverterSimEnabled)
     {
-        _currentFrequency = hz;
+        taskENTER_CRITICAL(&inverterMutex);
+        if (hz >= 0 && hz <= 60) // Limita a frequência
+        {
+            _currentFrequency = hz;
+        }
+        taskEXIT_CRITICAL(&inverterMutex);
+        DEBUG_PRINTLN("[WEG SIM] Frequência definida para: " + String(hz, 2) + " Hz");
     }
-    taskEXIT_CRITICAL(&inverterMutex);
-    Serial.println("[WEG SIM] Frequência definida para: " + String(hz, 2) + " Hz");
-
-#else
-    Serial.println("[WEG] Definindo Frequência: " + String(hz, 2) + " Hz");
-    // O valor para o inversor é de 0 a 8196, que corresponde a 0-60Hz
-    uint16_t value = static_cast<uint16_t>(hz * 136.6f);
-    node.writeSingleRegister(REG_WRITE_FREQUENCY, value);
-#endif
+    else
+    {
+        DEBUG_PRINTLN("[WEG] Definindo Frequência: " + String(hz, 2) + " Hz");
+        // O valor para o inversor é de 0 a 8196, que corresponde a 0-60Hz
+        uint16_t value = static_cast<uint16_t>(hz * 136.6f);
+        node.writeSingleRegister(REG_WRITE_FREQUENCY, value);
+    }
 }
 
 void WegInverter::start()
 {
-#if WEG_INVERTER_SIMULATION_ENABLED
-    bool started = false;
-    taskENTER_CRITICAL(&inverterMutex);
-    if (_currentFrequency > 0)
+    if (appConfigMgr.config.inverterSimEnabled)
     {
-        _status = RUNNING;
-        started = true;
-    }
-    taskEXIT_CRITICAL(&inverterMutex);
+        bool started = false;
+        taskENTER_CRITICAL(&inverterMutex);
+        if (_currentFrequency > 0)
+        {
+            _status = RUNNING;
+            started = true;
+        }
+        taskEXIT_CRITICAL(&inverterMutex);
 
-    if (started)
-    {
-        Serial.println("[WEG SIM] Comando START recebido");
+        if (started)
+        {
+            DEBUG_PRINTLN("[WEG SIM] Comando START recebido");
+        }
+        else
+        {
+            DEBUG_PRINTLN("[WEG SIM] Não é possível iniciar, frequência é 0.");
+        }
     }
     else
     {
-        Serial.println("[WEG SIM] Não é possível iniciar, frequência é 0.");
-    }
-#else
-    Serial.println("[WEG] Comando START enviado");
+        DEBUG_PRINTLN("[WEG] Comando START enviado");
 
-    node.writeSingleRegister(REG_WRITE_COMMAND, 7);
-#endif
+        node.writeSingleRegister(REG_WRITE_COMMAND, 7);
+    }
 }
 
 void WegInverter::stop()
 {
-#if WEG_INVERTER_SIMULATION_ENABLED
-    taskENTER_CRITICAL(&inverterMutex);
-    _status = STOPPED;
-    taskEXIT_CRITICAL(&inverterMutex);
-    Serial.println("[WEG SIM] Comando STOP recebido");
-#else
-    Serial.println("[WEG] Comando STOP enviado");
+    if (appConfigMgr.config.inverterSimEnabled)
+    {
+        taskENTER_CRITICAL(&inverterMutex);
+        _status = STOPPED;
+        taskEXIT_CRITICAL(&inverterMutex);
+        DEBUG_PRINTLN("[WEG SIM] Comando STOP recebido");
+    }
+    else
+    {
+        DEBUG_PRINTLN("[WEG] Comando STOP enviado");
 
-    node.writeSingleRegister(REG_WRITE_COMMAND, 0);
-#endif
+        node.writeSingleRegister(REG_WRITE_COMMAND, 0);
+    }
 }
 
 InverterStatus WegInverter::getStatus()

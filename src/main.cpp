@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include "Config.h"
+#include "AppConfig.h"
 #include "FileSystem.h"
 #include "WebServer.h"
 #include "RpmSensors.h"
@@ -9,7 +10,7 @@
 // --- Instanciação dos Objetos ---
 WebServer webServer;
 RpmSensors rpmSensors;
-WegInverter inversor(MODBUS_SLAVE_ID);
+WegInverter inversor;
 
 // --- Buffer Global para JSON ---
 // Pré-aloca o buffer para o JSON. Evita alocação de memória e serialização a cada requisição.
@@ -18,12 +19,17 @@ unsigned long lastJsonUpdateTime = 0;
 
 void setup()
 {
+#if DEBUG_MODE
     Serial.begin(115200);
+#endif
 
-    // 1. Inicializa Sistema de Arquivos
+    // 1. Carrega configurações do NVS (deve ser o primeiro passo)
+    appConfigMgr.load();
+
+    // 2. Inicializa Sistema de Arquivos
     if (!FileSystem::begin())
     {
-        Serial.println("Falha crítica no FS. Sistema pode ficar instável.");
+        DEBUG_PRINTLN("Falha crítica no FS. Sistema pode ficar instável.");
     }
 
     // Configura a API antes de iniciar o servidor
@@ -57,24 +63,27 @@ void setup()
             }
         });
 
-    // 2. Inicializa Web Server e Wi-Fi
+    // 3. Inicializa Web Server e Wi-Fi (usa AppConfig para rede)
     webServer.begin();
 
-    // 3. Inicializa Inversor
+    // 4. Inicializa Inversor com baud rate do AppConfig
     inversor.begin(PIN_RS485_RX, PIN_RS485_TX);
 
-    // 4. Inicializa Sensores e Interrupções
+    // 5. Inicializa Sensores e Interrupções
     rpmSensors.begin();
 }
 
 void loop()
 {
-    // Atualiza o cálculo de RPM (só faz algo se não estiver em modo simulação)
+    // Usa taxas de atualização dinâmicas do AppConfig (carregado do NVS)
+    const AppConfig &cfg = appConfigMgr.config;
+
+    // Atualiza o cálculo de RPM
     rpmSensors.update();
     inversor.update();
 
-    // Atualiza o JSON para a API em uma frequência controlada (ex: 2x por segundo)
-    if (millis() - lastJsonUpdateTime > JSON_UPDATE_RATE)
+    // Atualiza o JSON para a API em frequência configurável
+    if (millis() - lastJsonUpdateTime > cfg.jsonUpdateRate)
     {
         lastJsonUpdateTime = millis();
 

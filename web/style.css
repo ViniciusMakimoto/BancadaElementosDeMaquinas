@@ -85,6 +85,7 @@ nav {
     background-color: var(--card-bg);
     padding: 5px 15px;
     border-radius: 6px;
+    box-sizing: border-box;
 }
 
 .nav-link {
@@ -1003,3 +1004,381 @@ input[type=range] {
         grid-template-columns: 1fr;
     }
 }
+
+/* =============================================
+   BOTÃO DE LOGIN COM BADGES DE NÍVEL
+============================================= */
+
+.login-btn {
+    background: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.login-btn:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+/* Nível Operador — badge azul */
+.login-btn-operator {
+    border-color: #4da6ff;
+    color: #4da6ff;
+}
+
+.login-btn-operator:hover {
+    background: rgba(77, 166, 255, 0.1);
+}
+
+.badge-op {
+    color: #4da6ff;
+    font-size: 0.7rem;
+}
+
+/* Nível Admin — badge âmbar */
+.login-btn-admin {
+    border-color: #ffb347;
+    color: #ffb347;
+}
+
+.login-btn-admin:hover {
+    background: rgba(255, 179, 71, 0.1);
+}
+
+.badge-adm {
+    color: #ffb347;
+    font-size: 0.85rem;
+}
+
+/* =============================================
+   MODAL UNIFICADO (atualizado)
+============================================= */
+
+.modal-icon {
+    font-size: 2.5rem;
+    margin: 20px 0 10px;
+}
+
+.modal-desc {
+    color: #888;
+    font-size: 0.85rem;
+    margin: 0 0 16px;
+}
+
+.pin-error {
+    color: var(--danger-color);
+    font-size: 0.8rem;
+    margin: 4px 0 0;
+    min-height: 1.2em;
+}
+
+.modal-warning {
+    border-color: #ffb347 !important;
+}
+
+.modal-warning h3 {
+    color: #ffb347 !important;
+}
+
+.btn-restart-confirm {
+    background: #ffb347;
+    color: var(--bg-color);
+}
+
+.btn-restart-confirm:hover {
+    background: #ff9500;
+}
+
+/* =============================================
+   ABA DE CONFIGURAÇÕES
+============================================= */
+
+.config-page-header {
+    margin-bottom: 20px;
+}
+
+.config-page-header h2 {
+    font-size: 1.4rem;
+    margin: 0 0 4px;
+    color: var(--text-color);
+}
+
+.config-subtitle {
+    color: #666;
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+/* Banner de alerta de rede */
+.network-warning-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: rgba(255, 179, 71, 0.12);
+    border: 1px solid rgba(255, 179, 71, 0.4);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    animation: fadeIn 0.3s ease;
+    flex-wrap: wrap;
+}
+
+.network-warning-banner span {
+    color: #ffb347;
+    font-size: 0.88rem;
+    flex: 1;
+}
+
+.btn-restart {
+    background: #ffb347;
+    color: var(--bg-color);
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+    font-weight: bold;
+    cursor: pointer;
+    white-space: nowrap;
+    text-transform: none;
+    transition: background 0.2s;
+}
+
+.btn-restart:hover {
+    background: #ff9500;
+}
+
+/* Formulário de configurações */
+.config-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 800px;
+}
+
+/* Grupo colapsável */
+.config-group {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.3s;
+}
+
+.config-group:focus-within {
+    border-color: rgba(0, 255, 157, 0.3);
+}
+
+.config-group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: background 0.2s;
+}
+
+.config-group-header:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.config-group-header small {
+    font-weight: 400;
+    font-size: 0.75rem;
+    color: #ffb347;
+    margin-left: 6px;
+}
+
+.config-group-arrow {
+    color: #555;
+    font-size: 0.75rem;
+    transition: transform 0.3s ease;
+    display: inline-block;
+}
+
+.config-group-body {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Linha de configuração */
+.config-row {
+    display: grid;
+    grid-template-columns: 1fr 180px 120px;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    transition: background 0.15s;
+}
+
+.config-row:last-child {
+    border-bottom: none;
+}
+
+.config-row:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.config-row label {
+    font-size: 0.88rem;
+    color: #bbb;
+    font-weight: 400;
+}
+
+.config-row input[type="text"],
+.config-row input[type="number"],
+.config-row input[type="password"],
+.config-row select {
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    padding: 7px 10px;
+    outline: none;
+    font-family: inherit;
+    width: 100%;           /* ocupa toda a coluna de 180px */
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    text-transform: none;
+}
+
+.config-row input:focus,
+.config-row select:focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 6px rgba(0, 255, 157, 0.15);
+}
+
+.config-row select {
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.cfg-hint {
+    font-size: 0.75rem;
+    color: #555;
+    white-space: nowrap;
+}
+
+/* Toggle Switch */
+.cfg-toggle {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    cursor: pointer;
+}
+
+.cfg-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.cfg-slider {
+    position: absolute;
+    inset: 0;
+    background: #333;
+    border-radius: 24px;
+    transition: background 0.3s;
+}
+
+.cfg-slider::before {
+    content: '';
+    position: absolute;
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background: #888;
+    border-radius: 50%;
+    transition: transform 0.3s, background 0.3s;
+}
+
+.cfg-toggle input:checked + .cfg-slider {
+    background: rgba(0, 255, 157, 0.25);
+}
+
+.cfg-toggle input:checked + .cfg-slider::before {
+    transform: translateX(20px);
+    background: var(--accent-color);
+}
+
+/* Ações de salvar */
+.config-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 0;
+}
+
+.btn-save-config {
+    background: var(--accent-color);
+    color: var(--bg-color);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 28px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    text-transform: none;
+    transition: all 0.3s ease;
+}
+
+.btn-save-config:hover:not(:disabled) {
+    box-shadow: 0 0 16px rgba(0, 255, 157, 0.35);
+    transform: translateY(-1px);
+}
+
+.btn-save-config:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.config-save-status {
+    font-size: 0.88rem;
+    transition: color 0.3s;
+}
+
+.config-save-status.status-ok   { color: var(--accent-color); }
+.config-save-status.status-err  { color: var(--danger-color); }
+.config-save-status.status-warn { color: #ffb347; }
+
+/* Responsivo para config */
+@media (max-width: 600px) {
+    .config-row {
+        grid-template-columns: 1fr;  /* empilha em mobile */
+        gap: 6px;
+    }
+
+    .config-row input[type="text"],
+    .config-row input[type="number"],
+    .config-row input[type="password"],
+    .config-row select {
+        width: 100%;
+    }
+
+    .config-actions {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

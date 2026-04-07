@@ -6,7 +6,7 @@
 // Estrutura para armazenar os dados de cada sensor
 struct SensorState
 {
-    volatile unsigned long pulseCount;
+    volatile unsigned long periodInMicros;
     volatile unsigned long lastInterruptTime;
     float rpm;
 };

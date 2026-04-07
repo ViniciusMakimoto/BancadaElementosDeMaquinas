@@ -21,9 +21,10 @@
             <a href="#grafico" class="nav-link">Gráfico</a>
             <a href="#diagrama" class="nav-link">Diagrama</a>
             <a href="#calculadora" class="nav-link">Calculadora</a>
-            <a href="#controle" class="nav-link" style="display: none;">Controle</a>
+            <a href="#controle" class="nav-link" id="nav-controle" style="display: none;">Controle</a>
+            <a href="#configuracoes" class="nav-link" id="nav-config" style="display: none;">⚙ Configurações</a>
         </nav>
-        <button id="loginBtn" onclick="openModal()">Login Operador</button>
+        <button id="loginBtn" class="login-btn" onclick="openModal()">Login</button>
     </header>
 
     <main id="dashboard" class="page">
@@ -369,13 +370,195 @@
         </section>
     </main>
 
+    <!-- ========== ABA DE CONFIGURAÇÕES (somente admin) ========== -->
+    <main id="configuracoes" class="page" style="display: none;">
+        <div class="config-page-header">
+            <h2>⚙ Configurações do Sistema</h2>
+            <p class="config-subtitle">Alterações são salvas imediatamente no dispositivo.</p>
+        </div>
+
+        <!-- Banner de alerta de rede -->
+        <div id="network-change-banner" class="network-warning-banner" style="display:none;">
+            <span>⚠ Configurações de rede alteradas. O ESP32 precisará ser reiniciado para aplicar as mudanças.</span>
+            <button id="restartBtn" class="btn-restart" onclick="restartEsp()">🔄 Reiniciar ESP32</button>
+        </div>
+
+        <form id="configForm" class="config-form" onsubmit="return false;">
+
+            <!-- GRUPO: Segurança -->
+            <div class="config-group">
+                <div class="config-group-header" onclick="toggleConfigGroup(this)">
+                    <span>🔒 Segurança</span>
+                    <span class="config-group-arrow">▼</span>
+                </div>
+                <div class="config-group-body">
+                    <div class="config-row">
+                        <label for="cfg-op-pin">PIN do Operador</label>
+                        <input type="password" id="cfg-op-pin" maxlength="8" placeholder="••••" autocomplete="new-password">
+                        <span class="cfg-hint">4–8 dígitos</span>
+                    </div>
+                    <div class="config-row">
+                        <label for="cfg-adm-pin">PIN do Admin</label>
+                        <input type="password" id="cfg-adm-pin" maxlength="8" placeholder="••••" autocomplete="new-password">
+                        <span class="cfg-hint">4–8 dígitos</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRUPO: Sensores -->
+            <div class="config-group">
+                <div class="config-group-header" onclick="toggleConfigGroup(this)">
+                    <span>📡 Sensores de RPM</span>
+                    <span class="config-group-arrow">▼</span>
+                </div>
+                <div class="config-group-body">
+                    <div class="config-row">
+                        <label for="cfg-ppr">Pulsos por Revolução</label>
+                        <input type="number" id="cfg-ppr" min="1" max="100" step="1">
+                        <span class="cfg-hint">pulsos/rev</span>
+                    </div>
+                    <div class="config-row">
+                        <label for="cfg-sens-rate">Taxa de Atualização</label>
+                        <input type="number" id="cfg-sens-rate" min="100" max="10000" step="100">
+                        <span class="cfg-hint">ms</span>
+                    </div>
+                    <div class="config-row">
+                        <label for="cfg-sens-deb">Debounce Base</label>
+                        <input type="number" id="cfg-sens-deb" min="1" max="500" step="1">
+                        <span class="cfg-hint">ms (dividido por PPR internamente)</span>
+                    </div>
+                    <div class="config-row">
+                        <label for="cfg-sim-sens">Modo Simulação</label>
+                        <label class="cfg-toggle">
+                            <input type="checkbox" id="cfg-sim-sens">
+                            <span class="cfg-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRUPO: API / Sistema -->
+            <div class="config-group">
+                <div class="config-group-header" onclick="toggleConfigGroup(this)">
+                    <span>🔄 API & Sistema</span>
+                    <span class="config-group-arrow">▼</span>
+                </div>
+                <div class="config-group-body">
+                    <div class="config-row">
+                        <label for="cfg-json-rate">Taxa de Atualização da API</label>
+                        <input type="number" id="cfg-json-rate" min="100" max="5000" step="100">
+                        <span class="cfg-hint">ms</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRUPO: Inversor -->
+            <div class="config-group">
+                <div class="config-group-header" onclick="toggleConfigGroup(this)">
+                    <span>⚡ Inversor WEG (Modbus)</span>
+                    <span class="config-group-arrow">▼</span>
+                </div>
+                <div class="config-group-body">
+                    <div class="config-row">
+                        <label for="cfg-inv-rate">Taxa de Atualização</label>
+                        <input type="number" id="cfg-inv-rate" min="200" max="10000" step="100">
+                        <span class="cfg-hint">ms</span>
+                    </div>
+                    <div class="config-row">
+                        <label for="cfg-mb-baud">Baud Rate Modbus</label>
+                        <select id="cfg-mb-baud">
+                            <option value="9600">9600</option>
+                            <option value="19200">19200</option>
+                            <option value="38400">38400</option>
+                            <option value="57600">57600</option>
+                            <option value="115200">115200</option>
+                        </select>
+                        <span class="cfg-hint">bps</span>
+                    </div>
+                    <div class="config-row">
+                        <label for="cfg-mb-slave">Slave ID Modbus</label>
+                        <input type="number" id="cfg-mb-slave" min="1" max="247" step="1">
+                    </div>
+                    <div class="config-row">
+                        <label for="cfg-sim-inv">Modo Simulação</label>
+                        <label class="cfg-toggle">
+                            <input type="checkbox" id="cfg-sim-inv">
+                            <span class="cfg-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRUPO: Rede (altera requer restart) -->
+            <div class="config-group">
+                <div class="config-group-header" onclick="toggleConfigGroup(this)">
+                    <span>🌐 Rede Wi-Fi <small>(requer reinicialização)</small></span>
+                    <span class="config-group-arrow">▼</span>
+                </div>
+                <div class="config-group-body">
+                    <div class="config-row">
+                        <label for="cfg-use-ap">Modo Access Point</label>
+                        <label class="cfg-toggle">
+                            <input type="checkbox" id="cfg-use-ap">
+                            <span class="cfg-slider"></span>
+                        </label>
+                    </div>
+                    <div class="config-row">
+                        <label for="cfg-ssid">SSID</label>
+                        <input type="text" id="cfg-ssid" maxlength="63" placeholder="Nome da rede">
+                    </div>
+                    <div class="config-row">
+                        <label for="cfg-wifi-pass">Senha Wi-Fi</label>
+                        <input type="password" id="cfg-wifi-pass" maxlength="127" placeholder="Deixe em branco para não alterar" autocomplete="new-password">
+                        <span class="cfg-hint">Deixe vazio para manter a atual</span>
+                    </div>
+                    <div class="config-row">
+                        <label for="cfg-local-ip">IP Local</label>
+                        <input type="text" id="cfg-local-ip" maxlength="15" placeholder="192.168.4.1">
+                    </div>
+                    <div class="config-row">
+                        <label for="cfg-gateway">Gateway</label>
+                        <input type="text" id="cfg-gateway" maxlength="15" placeholder="192.168.4.1">
+                    </div>
+                    <div class="config-row">
+                        <label for="cfg-subnet">Máscara de Sub-rede</label>
+                        <input type="text" id="cfg-subnet" maxlength="15" placeholder="255.255.255.0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ações -->
+            <div class="config-actions">
+                <button type="button" class="btn-save-config" id="saveConfigBtn" onclick="saveConfig()">💾 Salvar Configurações</button>
+                <span id="configSaveStatus" class="config-save-status"></span>
+            </div>
+        </form>
+    </main>
+
+    <!-- Modal de Login Unificado -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
-            <h3>Acesso do Operador</h3>
-            <input type="password" id="pinInput" placeholder="Digite o PIN">
+            <div class="modal-icon">🔐</div>
+            <h3>Acesso ao Sistema</h3>
+            <p class="modal-desc">Digite o PIN de Operador ou Admin.</p>
+            <input type="password" id="pinInput" maxlength="8" placeholder="••••" autocomplete="current-password">
+            <div id="pinError" class="pin-error" style="display:none;"></div>
             <div class="modal-buttons">
-                <button onclick="checkAuth()">Entrar</button>
+                <button id="loginSubmitBtn" onclick="checkAuth()">Entrar</button>
                 <button onclick="closeModal()" class="btn-cancel">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de confirmação de Restart -->
+    <div id="restartModal" class="modal">
+        <div class="modal-content modal-warning">
+            <div class="modal-icon">⚠️</div>
+            <h3>Reinicialização Necessária</h3>
+            <p>As configurações de rede foram alteradas e salvas. O ESP32 precisará ser reiniciado para aplicar as mudanças.</p>
+            <div class="modal-buttons">
+                <button class="btn-restart-confirm" onclick="restartEsp()">🔄 Reiniciar Agora</button>
+                <button onclick="closeRestartModal()" class="btn-cancel">Depois</button>
             </div>
         </div>
     </div>
