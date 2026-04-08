@@ -411,6 +411,7 @@ input[type=range] {
 
 /* Regra para telas 'baixas' em modo paisagem (ex: celular deitado) */
 @media (max-height: 500px) and (orientation: landscape) {
+
     .chart-container,
     .diagram-container {
         /* Aumenta a altura do conteúdo para preencher melhor a tela */
@@ -522,6 +523,7 @@ input[type=range] {
         opacity: 0;
         transform: translateX(30px);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
@@ -832,6 +834,7 @@ input[type=range] {
 
 /* ===== PRINT STYLES ===== */
 @media print {
+
     /* Hide everything except the print report */
     body * {
         visibility: hidden;
@@ -1254,7 +1257,8 @@ input[type=range] {
     padding: 7px 10px;
     outline: none;
     font-family: inherit;
-    width: 100%;           /* ocupa toda a coluna de 180px */
+    width: 100%;
+    /* ocupa toda a coluna de 180px */
     box-sizing: border-box;
     transition: border-color 0.2s, box-shadow 0.2s;
     text-transform: none;
@@ -1314,11 +1318,11 @@ input[type=range] {
     transition: transform 0.3s, background 0.3s;
 }
 
-.cfg-toggle input:checked + .cfg-slider {
+.cfg-toggle input:checked+.cfg-slider {
     background: rgba(0, 255, 157, 0.25);
 }
 
-.cfg-toggle input:checked + .cfg-slider::before {
+.cfg-toggle input:checked+.cfg-slider::before {
     transform: translateX(20px);
     background: var(--accent-color);
 }
@@ -1359,14 +1363,23 @@ input[type=range] {
     transition: color 0.3s;
 }
 
-.config-save-status.status-ok   { color: var(--accent-color); }
-.config-save-status.status-err  { color: var(--danger-color); }
-.config-save-status.status-warn { color: #ffb347; }
+.config-save-status.status-ok {
+    color: var(--accent-color);
+}
+
+.config-save-status.status-err {
+    color: var(--danger-color);
+}
+
+.config-save-status.status-warn {
+    color: #ffb347;
+}
 
 /* Responsivo para config */
 @media (max-width: 600px) {
     .config-row {
-        grid-template-columns: 1fr;  /* empilha em mobile */
+        grid-template-columns: 1fr;
+        /* empilha em mobile */
         gap: 6px;
     }
 
@@ -1381,4 +1394,44 @@ input[type=range] {
         flex-direction: column;
         align-items: flex-start;
     }
-}
+}
+
+/* =============================================
+   IMPRESSÃO DO RELATÓRIO
+============================================= */
+@media print {
+    @page {
+        margin: 0 !important;
+        /* Esconde o cabeçalho e rodapé automáticos do navegador */
+    }
+
+    body,
+    html {
+        height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    header,
+    main,
+    .modal {
+        display: none !important;
+    }
+
+    #print-report {
+        page-break-after: auto;
+        page-break-inside: avoid;
+        margin: 0;
+        padding: 40px;
+        /* Adiciona margem interna já que o @page zerou as margens globais */
+    }
+
+    .print-footer {
+        page-break-inside: avoid;
+        page-break-after: avoid;
+    }
+
+    .print-section {
+        page-break-inside: avoid;
+    }
+}

@@ -664,7 +664,7 @@ const CalcWizard = {
         { name: 'Rolamento de Rolos Cilíndricos', efficiency: 0.98 },
         { name: 'Rolamento de Rolos Cônicos', efficiency: 0.97 },
         { name: 'Rolamento de Agulhas', efficiency: 0.985 },
-        { name: 'Bucha (Mancal de Deslizamento)', efficiency: 0.95 },
+        { name: 'Bucha (Mancal de Deslizamento)', efficiency: 0.96 },
     ],
 
     // Output de cada estágio
@@ -684,7 +684,7 @@ const CalcWizard = {
     },
 
     populateBearingSelects() {
-        ['engr-rolamento', 'corr-rolamento'].forEach(id => {
+        ['engr-rolamento', 'corr-rolamento', 'red-rolamento'].forEach(id => {
             const sel = document.getElementById(id);
             this.BEARING_TYPES.forEach((bt, i) => {
                 const opt = document.createElement('option');
@@ -709,7 +709,7 @@ const CalcWizard = {
         bind(['polia-d1', 'polia-d2', 'polia-rendimento'], 1);
         bind(['engr-z1', 'engr-z2', 'engr-modulo', 'engr-rendimento', 'engr-rolamento'], 2);
         bind(['corr-z1', 'corr-z2', 'corr-passo', 'corr-rendimento', 'corr-rolamento'], 3);
-        bind(['red-relacao', 'red-rendimento'], 4);
+        bind(['red-relacao', 'red-rendimento', 'red-rolamento', 'red-acoplamento'], 4);
     },
 
     recalculateFrom(step) {
@@ -728,7 +728,8 @@ const CalcWizard = {
     },
 
     calcTorque(powerKw, rpm) {
-        return rpm > 0 ? (powerKw * 9549.297) / rpm : 0;
+        // Torque in Kgf.m = (Power(kW) * 973.758) / rpm
+        return rpm > 0 ? (powerKw * 973.758) / rpm : 0;
     },
 
     // --- ETAPA 0: MOTOR ---
@@ -741,16 +742,17 @@ const CalcWizard = {
 
         const nSync = (polos > 0 && freq > 0) ? (120 * freq) / polos : 0;
         const nReal = nSync * (1 - slip);
-        const potBruta = potCV * this.CV_TO_KW;
-        const potKw = potBruta * rend;
-        const torque = this.calcTorque(potKw, nReal);
 
-        this.outputs[0] = { rpmIn: 0, rpmOut: nReal, powerIn: potBruta, powerOut: potKw, torque, efficiency: rend, ratio: 1 };
+        const potMecanica = potCV * this.CV_TO_KW; // Potência mecânica útil (nominal) no eixo
+        const potEletrica = rend > 0 ? potMecanica / rend : 0; // Potência elétrica consumida
+        const torque = this.calcTorque(potMecanica, nReal);
+
+        this.outputs[0] = { rpmIn: 0, rpmOut: nReal, powerIn: potEletrica, powerOut: potMecanica, torque, efficiency: rend, ratio: 1 };
 
         document.getElementById('res-motor-nsync').textContent = this.fmt(nSync, 0) + ' RPM';
         document.getElementById('res-motor-nreal').textContent = this.fmt(nReal, 1) + ' RPM';
-        document.getElementById('res-motor-potutil').textContent = this.fmt(potKw, 3) + ' kW';
-        document.getElementById('res-motor-torque').textContent = this.fmt(torque, 2) + ' N·m';
+        document.getElementById('res-motor-potutil').textContent = this.fmt(potMecanica, 3) + ' kW';
+        document.getElementById('res-motor-torque').textContent = this.fmt(torque, 2) + ' Kgf.m';
     },
 
     // --- ETAPA 1: POLIAS ---
@@ -770,7 +772,7 @@ const CalcWizard = {
         document.getElementById('res-polia-i').textContent = this.fmt(ratio, 2);
         document.getElementById('res-polia-rpm').textContent = this.fmt(rpmOut, 1) + ' RPM';
         document.getElementById('res-polia-pot').textContent = this.fmt(powerOut, 3) + ' kW';
-        document.getElementById('res-polia-torque').textContent = this.fmt(torque, 2) + ' N·m';
+        document.getElementById('res-polia-torque').textContent = this.fmt(torque, 2) + ' Kgf.m';
     },
 
     // --- ETAPA 2: ENGRENAGENS ---
@@ -787,7 +789,7 @@ const CalcWizard = {
         const rpmOut = ratio > 0 ? prev.rpmOut / ratio : 0;
         const d1 = z1 * mod;
         const d2 = z2 * mod;
-        const totalEff = rend * bEff;
+        const totalEff = rend * bEff; // 2 mancais em cada eixo adicionado
         const powerOut = prev.powerOut * totalEff;
         const torque = this.calcTorque(powerOut, rpmOut);
 
@@ -798,7 +800,7 @@ const CalcWizard = {
         document.getElementById('res-engr-d1').textContent = this.fmt(d1, 1) + ' mm';
         document.getElementById('res-engr-d2').textContent = this.fmt(d2, 1) + ' mm';
         document.getElementById('res-engr-pot').textContent = this.fmt(powerOut, 3) + ' kW';
-        document.getElementById('res-engr-torque').textContent = this.fmt(torque, 2) + ' N·m';
+        document.getElementById('res-engr-torque').textContent = this.fmt(torque, 2) + ' Kgf.m';
     },
 
     // --- ETAPA 3: CORRENTES ---
@@ -815,7 +817,7 @@ const CalcWizard = {
         const rpmOut = ratio > 0 ? prev.rpmOut / ratio : 0;
         const d1 = z1 > 0 ? passo / Math.sin(Math.PI / z1) : 0;
         const d2 = z2 > 0 ? passo / Math.sin(Math.PI / z2) : 0;
-        const totalEff = rend * bEff;
+        const totalEff = rend * bEff; // 2 mancais em cada eixo tracionado
         const powerOut = prev.powerOut * totalEff;
         const torque = this.calcTorque(powerOut, rpmOut);
 
@@ -826,7 +828,7 @@ const CalcWizard = {
         document.getElementById('res-corr-d1').textContent = this.fmt(d1, 1) + ' mm';
         document.getElementById('res-corr-d2').textContent = this.fmt(d2, 1) + ' mm';
         document.getElementById('res-corr-pot').textContent = this.fmt(powerOut, 3) + ' kW';
-        document.getElementById('res-corr-torque').textContent = this.fmt(torque, 2) + ' N·m';
+        document.getElementById('res-corr-torque').textContent = this.fmt(torque, 2) + ' Kgf.m';
     },
 
     // --- ETAPA 4: REDUTOR ---
@@ -834,16 +836,20 @@ const CalcWizard = {
         const prev = this.outputs[3];
         const ratio = this.getVal('red-relacao');
         const rend = this.getVal('red-rendimento') / 100;
+        const acoplamento = this.getVal('red-acoplamento') / 100;
+        const bIdx = parseInt(document.getElementById('red-rolamento').value) || 0;
+        const bEff = this.BEARING_TYPES[bIdx]?.efficiency || 1;
 
         const rpmOut = ratio > 0 ? prev.rpmOut / ratio : 0;
-        const powerOut = prev.powerOut * rend;
+        const totalEff = rend * Math.pow(bEff, 2) * acoplamento; // 2 mancais em cada eixo adicionado
+        const powerOut = prev.powerOut * totalEff;
         const torque = this.calcTorque(powerOut, rpmOut);
 
-        this.outputs[4] = { rpmIn: prev.rpmOut, rpmOut, powerIn: prev.powerOut, powerOut, torque, efficiency: rend, ratio };
+        this.outputs[4] = { rpmIn: prev.rpmOut, rpmOut, powerIn: prev.powerOut, powerOut, torque, efficiency: totalEff, ratio };
 
         document.getElementById('res-red-rpm').textContent = this.fmt(rpmOut, 1) + ' RPM';
         document.getElementById('res-red-pot').textContent = this.fmt(powerOut, 3) + ' kW';
-        document.getElementById('res-red-torque').textContent = this.fmt(torque, 2) + ' N·m';
+        document.getElementById('res-red-torque').textContent = this.fmt(torque, 2) + ' Kgf.m';
     },
 
     // --- ETAPA 5: RESUMO ---
@@ -861,11 +867,11 @@ const CalcWizard = {
         h += '<div class="calc-summary-stat"><span class="stat-label">Rendimento Global</span><span class="stat-value">' + this.fmt(gEff * 100, 1) + '%</span></div>';
         h += '<div class="calc-summary-stat"><span class="stat-label">Potência Final</span><span class="stat-value">' + this.fmt(last.powerOut, 3) + ' kW</span></div>';
         h += '<div class="calc-summary-stat"><span class="stat-label">RPM Final</span><span class="stat-value">' + this.fmt(last.rpmOut, 1) + '</span></div>';
-        h += '<div class="calc-summary-stat"><span class="stat-label">Torque Final</span><span class="stat-value">' + this.fmt(last.torque, 2) + ' N·m</span></div>';
+        h += '<div class="calc-summary-stat"><span class="stat-label">Torque Final</span><span class="stat-value">' + this.fmt(last.torque, 2) + ' Kgf.m</span></div>';
         h += '</div>';
 
         h += '<div class="calc-summary-table-wrap"><table class="calc-summary-table">';
-        h += '<thead><tr><th>Estágio</th><th>RPM Ent.</th><th>RPM Saída</th><th>Pot. Ent. (kW)</th><th>Pot. Saída (kW)</th><th>Torque (N·m)</th><th>η</th><th>Relação</th></tr></thead>';
+        h += '<thead><tr><th>Estágio</th><th>RPM Ent.</th><th>RPM Saída</th><th>Pot. Ent. (kW)</th><th>Pot. Saída (kW)</th><th>Torque (Kgf.m)</th><th>η</th><th>Relação</th></tr></thead>';
         h += '<tbody>';
         this.outputs.forEach((o, i) => {
             h += '<tr>';
@@ -907,7 +913,7 @@ const CalcWizard = {
         r += '<div class="print-global-item"><span class="label">Rendimento Global</span><span class="value">' + this.fmt(gEff * 100, 1) + '%</span></div>';
         r += '<div class="print-global-item"><span class="label">Potência Final</span><span class="value">' + this.fmt(last.powerOut, 3) + ' kW</span></div>';
         r += '<div class="print-global-item"><span class="label">RPM Final</span><span class="value">' + this.fmt(last.rpmOut, 1) + '</span></div>';
-        r += '<div class="print-global-item"><span class="label">Torque Final</span><span class="value">' + this.fmt(last.torque, 2) + ' N·m</span></div>';
+        r += '<div class="print-global-item"><span class="label">Torque Final</span><span class="value">' + this.fmt(last.torque, 2) + ' Kgf.m</span></div>';
         r += '</div>';
 
         // Input data per stage
@@ -952,7 +958,9 @@ const CalcWizard = {
             {
                 stage: 'Redutor', params: [
                     ['Relação (i)', this.getVal('red-relacao') + ':1'],
-                    ['Rendimento', this.getVal('red-rendimento') + '%'],
+                    ['Rendimento Redutor', this.getVal('red-rendimento') + '%'],
+                    ['Rend. Acoplamento', this.getVal('red-acoplamento') + '%'],
+                    ['Rolamento', document.getElementById('red-rolamento').selectedOptions[0]?.text || '—'],
                 ]
             },
         ];
@@ -968,7 +976,7 @@ const CalcWizard = {
 
         // Results table
         r += '<div class="print-section"><h2>Resultados por Estágio</h2>';
-        r += '<table><thead><tr><th>Estágio</th><th>RPM Ent.</th><th>RPM Saída</th><th>Pot. Ent. (kW)</th><th>Pot. Saída (kW)</th><th>Torque (N·m)</th><th>η</th><th>Relação</th></tr></thead><tbody>';
+        r += '<table><thead><tr><th>Estágio</th><th>RPM Ent.</th><th>RPM Saída</th><th>Pot. Ent. (kW)</th><th>Pot. Saída (kW)</th><th>Torque (Kgf.m)</th><th>η</th><th>Relação</th></tr></thead><tbody>';
         this.outputs.forEach((o, i) => {
             r += '<tr>';
             r += '<td>' + names[i] + '</td>';
@@ -983,7 +991,7 @@ const CalcWizard = {
         });
         r += '</tbody></table></div>';
 
-        r += '<p class="print-footer">Bancada Didática de Elementos de Máquina — Relatório gerado automaticamente</p>';
+        // Rodapé removido para economizar espaço de folha
         r += '</div>';
 
         // Inject, print, remove
