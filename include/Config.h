@@ -24,7 +24,7 @@ static const uint16_t INVERTER_UPDATE_RATE = DEFAULT_INVERTER_UPDATE_RATE;
 #define ADMIN_PIN    "9999"
 
 // --- Debug ---
-#define DEBUG_MODE true
+#define DEBUG_MODE false
 
 #if DEBUG_MODE
   #define DEBUG_PRINT(x) Serial.print(x)
@@ -43,22 +43,22 @@ static const uint16_t INVERTER_UPDATE_RATE = DEFAULT_INVERTER_UPDATE_RATE;
 #define WEG_INVERTER_SIMULATION_ENABLED DEFAULT_INVERTER_SIMULATION_ENABLED
 
 // --- Wi-Fi & Rede ---
-#define DEFAULT_USE_AP     true
+#define DEFAULT_USE_AP     false
 #define DEFAULT_SSID_NAME  "Bancada_EM"
 #define DEFAULT_WIFI_PASS  "12345678"
-#define DEFAULT_LOCAL_IP   "192.168.4.1"
-#define DEFAULT_GATEWAY    "192.168.4.1"
+#define DEFAULT_LOCAL_IP   "192.168.0.50"
+#define DEFAULT_GATEWAY    "192.168.0.1"
 #define DEFAULT_SUBNET     "255.255.255.0"
 
 // Descomente a linha abaixo para usar o modo Access Point (AP) como padrão de compilação
-#define CREATE_WIFI_AP
+// #define CREATE_WIFI_AP
 
 static const char *SSID_NAME = DEFAULT_SSID_NAME;
 static const char *WIFI_PASS = DEFAULT_WIFI_PASS;
 
 // IP Fixo (padrão de compilação — runtime usa AppConfig)
-static const IPAddress LOCAL_IP(192, 168, 4, 1);
-static const IPAddress GATEWAY(192, 168, 4, 1);
+static const IPAddress LOCAL_IP(192, 168, 0, 50);
+static const IPAddress GATEWAY(192, 168, 0, 1);
 static const IPAddress SUBNET(255, 255, 255, 0);
 
 // --- Pinos do Hardware ---

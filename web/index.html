@@ -140,24 +140,30 @@
                     <div class="calc-form-group">
                         <label for="motor-slip">Escorregamento</label>
                         <div class="calc-input-wrap">
-                            <input type="number" id="motor-slip" step="0.1" min="0" max="10" placeholder="3.0" value="3">
+                            <input type="number" id="motor-slip" step="0.1" min="0" max="10" placeholder="3.0"
+                                value="3">
                             <span class="calc-unit">%</span>
                         </div>
                     </div>
                     <div class="calc-form-group">
                         <label for="motor-rendimento">Rendimento do Motor</label>
                         <div class="calc-input-wrap">
-                            <input type="number" id="motor-rendimento" step="0.1" min="0" max="100" placeholder="85" value="85">
+                            <input type="number" id="motor-rendimento" step="0.1" min="0" max="100" placeholder="85"
+                                value="85">
                             <span class="calc-unit">%</span>
                         </div>
                     </div>
                 </div>
                 <div class="calc-results-box">
                     <h3>📊 Resultados Parciais</h3>
-                    <div class="calc-result-row"><span>Rotação Síncrona</span><span id="res-motor-nsync" class="calc-result-value">—</span></div>
-                    <div class="calc-result-row"><span>Rotação Real</span><span id="res-motor-nreal" class="calc-result-value">—</span></div>
-                    <div class="calc-result-row"><span>Potência Útil</span><span id="res-motor-potutil" class="calc-result-value">—</span></div>
-                    <div class="calc-result-row"><span>Torque</span><span id="res-motor-torque" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Rotação Síncrona</span><span id="res-motor-nsync"
+                            class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Rotação Real</span><span id="res-motor-nreal"
+                            class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Potência Útil</span><span id="res-motor-potutil"
+                            class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Torque</span><span id="res-motor-torque"
+                            class="calc-result-value">—</span></div>
                 </div>
             </section>
 
@@ -165,7 +171,8 @@
             <section class="calc-step-panel" id="calc-step-1">
                 <div class="calc-step-header">
                     <h2>⚙ Polias Escalonadas e Correia</h2>
-                    <p class="calc-step-desc">Configure os diâmetros das polias e o rendimento da transmissão por correia.</p>
+                    <p class="calc-step-desc">Configure os diâmetros das polias e o rendimento da transmissão por
+                        correia.</p>
                 </div>
                 <div class="calc-form-grid">
                     <div class="calc-form-group">
@@ -185,17 +192,22 @@
                     <div class="calc-form-group">
                         <label for="polia-rendimento">Rendimento da Correia</label>
                         <div class="calc-input-wrap">
-                            <input type="number" id="polia-rendimento" step="0.1" min="0" max="100" placeholder="95" value="95">
+                            <input type="number" id="polia-rendimento" step="0.1" min="0" max="100" placeholder="95"
+                                value="95">
                             <span class="calc-unit">%</span>
                         </div>
                     </div>
                 </div>
                 <div class="calc-results-box">
                     <h3>📊 Resultados Parciais</h3>
-                    <div class="calc-result-row"><span>Relação de Transmissão (i)</span><span id="res-polia-i" class="calc-result-value">—</span></div>
-                    <div class="calc-result-row"><span>RPM de Saída</span><span id="res-polia-rpm" class="calc-result-value">—</span></div>
-                    <div class="calc-result-row"><span>Potência Transmitida</span><span id="res-polia-pot" class="calc-result-value">—</span></div>
-                    <div class="calc-result-row"><span>Torque na Saída</span><span id="res-polia-torque" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Relação de Transmissão (i)</span><span id="res-polia-i"
+                            class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>RPM de Saída</span><span id="res-polia-rpm"
+                            class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Potência Transmitida</span><span id="res-polia-pot"
+                            class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Torque na Saída</span><span id="res-polia-torque"
+                            class="calc-result-value">—</span></div>
                 </div>
             </section>
 
@@ -230,7 +242,8 @@
                     <div class="calc-form-group">
                         <label for="engr-rendimento">Rendimento do Par</label>
                         <div class="calc-input-wrap">
-                            <input type="number" id="engr-rendimento" step="0.1" min="0" max="100" placeholder="97" value="97">
+                            <input type="number" id="engr-rendimento" step="0.1" min="0" max="100" placeholder="97"
+                                value="97">
                             <span class="calc-unit">%</span>
                         </div>
                     </div>
@@ -243,12 +256,18 @@
                 </div>
                 <div class="calc-results-box">
                     <h3>📊 Resultados Parciais</h3>
-                    <div class="calc-result-row"><span>Relação de Transmissão (i)</span><span id="res-engr-i" class="calc-result-value">—</span></div>
-                    <div class="calc-result-row"><span>RPM de Saída</span><span id="res-engr-rpm" class="calc-result-value">—</span></div>
-                    <div class="calc-result-row"><span>Diâm. Primitivo Motora</span><span id="res-engr-d1" class="calc-result-value">—</span></div>
-                    <div class="calc-result-row"><span>Diâm. Primitivo Movida</span><span id="res-engr-d2" class="calc-result-value">—</span></div>
-                    <div class="calc-result-row"><span>Potência Transmitida</span><span id="res-engr-pot" class="calc-result-value">—</span></div>
-                    <div class="calc-result-row"><span>Torque na Saída</span><span id="res-engr-torque" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Relação de Transmissão (i)</span><span id="res-engr-i"
+                            class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>RPM de Saída</span><span id="res-engr-rpm"
+                            class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Diâm. Primitivo Motora</span><span id="res-engr-d1"
+                            class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Diâm. Primitivo Movida</span><span id="res-engr-d2"
+                            class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Potência Transmitida</span><span id="res-engr-pot"
+                            class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Torque na Saída</span><span id="res-engr-torque"
+                            class="calc-result-value">—</span></div>
                 </div>
             </section>
 
@@ -283,7 +302,8 @@
                     <div class="calc-form-group">
                         <label for="corr-rendimento">Rendimento da Corrente</label>
                         <div class="calc-input-wrap">
-                            <input type="number" id="corr-rendimento" step="0.1" min="0" max="100" placeholder="97" value="97">
+                            <input type="number" id="corr-rendimento" step="0.1" min="0" max="100" placeholder="97"
+                                value="97">
                             <span class="calc-unit">%</span>
                         </div>
                     </div>
@@ -296,12 +316,18 @@
                 </div>
                 <div class="calc-results-box">
                     <h3>📊 Resultados Parciais</h3>
-                    <div class="calc-result-row"><span>Relação de Transmissão (i)</span><span id="res-corr-i" class="calc-result-value">—</span></div>
-                    <div class="calc-result-row"><span>RPM de Saída</span><span id="res-corr-rpm" class="calc-result-value">—</span></div>
-                    <div class="calc-result-row"><span>Diâm. Primitivo Motora</span><span id="res-corr-d1" class="calc-result-value">—</span></div>
-                    <div class="calc-result-row"><span>Diâm. Primitivo Movida</span><span id="res-corr-d2" class="calc-result-value">—</span></div>
-                    <div class="calc-result-row"><span>Potência Transmitida</span><span id="res-corr-pot" class="calc-result-value">—</span></div>
-                    <div class="calc-result-row"><span>Torque na Saída</span><span id="res-corr-torque" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Relação de Transmissão (i)</span><span id="res-corr-i"
+                            class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>RPM de Saída</span><span id="res-corr-rpm"
+                            class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Diâm. Primitivo Motora</span><span id="res-corr-d1"
+                            class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Diâm. Primitivo Movida</span><span id="res-corr-d2"
+                            class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Potência Transmitida</span><span id="res-corr-pot"
+                            class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Torque na Saída</span><span id="res-corr-torque"
+                            class="calc-result-value">—</span></div>
                 </div>
             </section>
 
@@ -322,7 +348,8 @@
                     <div class="calc-form-group">
                         <label for="red-rendimento">Rendimento do Redutor</label>
                         <div class="calc-input-wrap">
-                            <input type="number" id="red-rendimento" step="0.1" min="0" max="100" placeholder="90" value="90">
+                            <input type="number" id="red-rendimento" step="0.1" min="0" max="100" placeholder="90"
+                                value="90">
                             <span class="calc-unit">%</span>
                         </div>
                     </div>
@@ -335,16 +362,20 @@
                     <div class="calc-form-group">
                         <label for="red-acoplamento">Rendimento do Acoplamento</label>
                         <div class="calc-input-wrap">
-                            <input type="number" id="red-acoplamento" step="0.1" min="0" max="100" placeholder="98" value="98">
+                            <input type="number" id="red-acoplamento" step="0.1" min="0" max="100" placeholder="98"
+                                value="98">
                             <span class="calc-unit">%</span>
                         </div>
                     </div>
                 </div>
                 <div class="calc-results-box">
                     <h3>📊 Resultados Parciais</h3>
-                    <div class="calc-result-row"><span>RPM de Saída</span><span id="res-red-rpm" class="calc-result-value">—</span></div>
-                    <div class="calc-result-row"><span>Potência na Saída</span><span id="res-red-pot" class="calc-result-value">—</span></div>
-                    <div class="calc-result-row"><span>Torque na Saída</span><span id="res-red-torque" class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>RPM de Saída</span><span id="res-red-rpm"
+                            class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Potência na Saída</span><span id="res-red-pot"
+                            class="calc-result-value">—</span></div>
+                    <div class="calc-result-row"><span>Torque na Saída</span><span id="res-red-torque"
+                            class="calc-result-value">—</span></div>
                 </div>
             </section>
 
@@ -363,7 +394,8 @@
 
         <!-- Navigation -->
         <div class="calc-nav">
-            <button id="calc-prev-btn" class="calc-btn calc-btn-prev" onclick="CalcWizard.prevStep()" style="visibility: hidden;">← Anterior</button>
+            <button id="calc-prev-btn" class="calc-btn calc-btn-prev" onclick="CalcWizard.prevStep()"
+                style="visibility: hidden;">← Anterior</button>
             <span class="calc-step-indicator" id="calc-step-indicator">Etapa 1 de 6</span>
             <button id="calc-next-btn" class="calc-btn calc-btn-next" onclick="CalcWizard.nextStep()">Próximo →</button>
         </div>
@@ -407,12 +439,14 @@
                 <div class="config-group-body">
                     <div class="config-row">
                         <label for="cfg-op-pin">PIN do Operador</label>
-                        <input type="password" id="cfg-op-pin" maxlength="8" placeholder="••••" autocomplete="new-password">
+                        <input type="password" id="cfg-op-pin" maxlength="8" placeholder="••••"
+                            autocomplete="new-password">
                         <span class="cfg-hint">4–8 dígitos</span>
                     </div>
                     <div class="config-row">
                         <label for="cfg-adm-pin">PIN do Admin</label>
-                        <input type="password" id="cfg-adm-pin" maxlength="8" placeholder="••••" autocomplete="new-password">
+                        <input type="password" id="cfg-adm-pin" maxlength="8" placeholder="••••"
+                            autocomplete="new-password">
                         <span class="cfg-hint">4–8 dígitos</span>
                     </div>
                 </div>
@@ -522,16 +556,17 @@
                     </div>
                     <div class="config-row">
                         <label for="cfg-wifi-pass">Senha Wi-Fi</label>
-                        <input type="password" id="cfg-wifi-pass" maxlength="127" placeholder="Deixe em branco para não alterar" autocomplete="new-password">
+                        <input type="password" id="cfg-wifi-pass" maxlength="127"
+                            placeholder="Deixe em branco para não alterar" autocomplete="new-password">
                         <span class="cfg-hint">Deixe vazio para manter a atual</span>
                     </div>
                     <div class="config-row">
                         <label for="cfg-local-ip">IP Local</label>
-                        <input type="text" id="cfg-local-ip" maxlength="15" placeholder="192.168.4.1">
+                        <input type="text" id="cfg-local-ip" maxlength="15" placeholder="192.168.0.50">
                     </div>
                     <div class="config-row">
                         <label for="cfg-gateway">Gateway</label>
-                        <input type="text" id="cfg-gateway" maxlength="15" placeholder="192.168.4.1">
+                        <input type="text" id="cfg-gateway" maxlength="15" placeholder="192.168.0.1">
                     </div>
                     <div class="config-row">
                         <label for="cfg-subnet">Máscara de Sub-rede</label>
@@ -542,7 +577,8 @@
 
             <!-- Ações -->
             <div class="config-actions">
-                <button type="button" class="btn-save-config" id="saveConfigBtn" onclick="saveConfig()">💾 Salvar Configurações</button>
+                <button type="button" class="btn-save-config" id="saveConfigBtn" onclick="saveConfig()">💾 Salvar
+                    Configurações</button>
                 <span id="configSaveStatus" class="config-save-status"></span>
             </div>
         </form>
@@ -568,7 +604,8 @@
         <div class="modal-content modal-warning">
             <div class="modal-icon">⚠️</div>
             <h3>Reinicialização Necessária</h3>
-            <p>As configurações de rede foram alteradas e salvas. O ESP32 precisará ser reiniciado para aplicar as mudanças.</p>
+            <p>As configurações de rede foram alteradas e salvas. O ESP32 precisará ser reiniciado para aplicar as
+                mudanças.</p>
             <div class="modal-buttons">
                 <button class="btn-restart-confirm" onclick="restartEsp()">🔄 Reiniciar Agora</button>
                 <button onclick="closeRestartModal()" class="btn-cancel">Depois</button>

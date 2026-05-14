@@ -451,8 +451,8 @@ async function loadConfig() {
             useAP: true,
             ssid: 'Bancada_EM',
             wifiPass: '***',
-            localIp: '192.168.4.1',
-            gateway: '192.168.4.1',
+            localIp: '192.168.0.50',
+            gateway: '192.168.0.1',
             subnet: '255.255.255.0'
         };
         populateConfigForm(mockCfg);
