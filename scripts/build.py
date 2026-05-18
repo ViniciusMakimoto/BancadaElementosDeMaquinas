@@ -13,6 +13,7 @@ CSS_IN = "web/style.css"
 JS_IN = "web/script.js"
 ICON_IN = "web/favicon.ico"
 DIAGRAM_IN = "web/images/bancada_superior.png"
+LOGO_IN = "web/images/logo.png"
 
 # Arquivo de saída na pasta 'data' para o ESP32 (agora comprimido)
 HTML_OUT = "data/index.html.gz"
@@ -97,6 +98,21 @@ if os.path.exists(DIAGRAM_IN):
     except Exception as e:
         print(f"AVISO: Falha ao embutir a imagem do diagrama - {e}")
 
+# --- Injeção do Logo (Base64) ---
+if os.path.exists(LOGO_IN):
+    print("Embutindo a imagem do logo...")
+    try:
+        with open(LOGO_IN, "rb") as f:
+            b64_logo = base64.b64encode(f.read()).decode('utf-8')
+        
+        # Cria o data URI completo para a imagem PNG
+        logo_uri = f'data:image/png;base64,{b64_logo}'
+        
+        # Substitui o placeholder no HTML pelo data URI
+        html_content = html_content.replace('src="images/logo.png"', f'src="{logo_uri}"')
+        print(" -> Imagem do logo embutida no HTML.")
+    except Exception as e:
+        print(f"AVISO: Falha ao embutir a imagem do logo - {e}")
 
 # --- Minificação do HTML Final ---
 print("Minificando HTML final...")

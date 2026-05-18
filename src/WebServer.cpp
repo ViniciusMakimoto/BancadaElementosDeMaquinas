@@ -87,15 +87,18 @@ void WebServer::begin()
               {
         AsyncWebServerResponse *response = request->beginResponse(200, "text/html", index_html_gz, index_html_gz_len);
         response->addHeader("Content-Encoding", "gzip");
+        response->addHeader("Cache-Control", "max-age=86400, public");
         request->send(response); });
 
     server.on("/lib/chart.umd.min.js", HTTP_GET, [](AsyncWebServerRequest *request)
               {
         AsyncWebServerResponse *response = request->beginResponse(200, "application/javascript", chart_umd_min_js_gz, chart_umd_min_js_gz_len);
         response->addHeader("Content-Encoding", "gzip");
+        response->addHeader("Cache-Control", "max-age=31536000, public");
         request->send(response); });
 #else
-    server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
+    // O setCacheControl adiciona o cabeçalho HTTP necessário para o navegador fazer o cache no cliente
+    server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html").setCacheControl("max-age=86400");
 #endif
 
     server.begin();

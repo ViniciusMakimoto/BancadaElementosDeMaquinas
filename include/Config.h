@@ -6,6 +6,7 @@
 // Estes valores são os PADRÕES DE FÁBRICA usados pelo ConfigManager
 // quando o NVS está vazio ou foi resetado.
 #define DEFAULT_PULSES_PER_REVOLUTION 1
+#define DEFAULT_SENSOR_TIMEOUT        4000  // ms
 #define DEFAULT_SENSOR_UPDATE_RATE    1000  // ms
 #define DEFAULT_SENSOR_DEBOUNCE_BASE  30    // ms (debounce base, antes de dividir por PPR)
 #define DEFAULT_JSON_UPDATE_RATE      500   // ms
@@ -79,7 +80,7 @@ static const IPAddress SUBNET(255, 255, 255, 0);
 
 //  Registradores do Inversor
 //  Leitura
-static const uint16_t REG_READ_FREQUENCY = 2;
+static const uint16_t REG_READ_FREQUENCY = 5;
 // #define REG_READ_CURRENT 0x0002
 // #define REG_READ_MOTOR_STATUS 0x0003
 // Escrita

@@ -31,7 +31,12 @@ void ConfigManager::load()
     strlcpy(config.adminPin,    admPin.c_str(), sizeof(config.adminPin));
 
     // --- Sensores ---
-    config.pulsesPerRevolution = ok ? prefs.getUShort("ppr",          DEFAULT_PULSES_PER_REVOLUTION)  : DEFAULT_PULSES_PER_REVOLUTION;
+    for (int i = 0; i < 4; i++) {
+        String pprKey = "ppr" + String(i + 1);
+        String toKey = "to" + String(i + 1);
+        config.pulsesPerRevolution[i] = ok ? prefs.getUShort(pprKey.c_str(), DEFAULT_PULSES_PER_REVOLUTION) : DEFAULT_PULSES_PER_REVOLUTION;
+        config.sensorTimeout[i]       = ok ? prefs.getULong(toKey.c_str(), DEFAULT_SENSOR_TIMEOUT) : DEFAULT_SENSOR_TIMEOUT;
+    }
     config.sensorUpdateRate    = ok ? prefs.getUShort("sens_rate",    DEFAULT_SENSOR_UPDATE_RATE)     : DEFAULT_SENSOR_UPDATE_RATE;
     config.sensorDebounceBase  = ok ? prefs.getUShort("sens_deb",     DEFAULT_SENSOR_DEBOUNCE_BASE)   : DEFAULT_SENSOR_DEBOUNCE_BASE;
     config.sensorSimEnabled    = ok ? prefs.getBool("sim_sens",        DEFAULT_SENSOR_SIMULATION_ENABLED) : DEFAULT_SENSOR_SIMULATION_ENABLED;
@@ -64,8 +69,10 @@ void ConfigManager::load()
 
     DEBUG_PRINTLN("[CFG] Configurações carregadas:");
     DEBUG_PRINTF("  Operador PIN: %s | Admin PIN: %s\n", config.operatorPin, config.adminPin);
-    DEBUG_PRINTF("  PPR: %u | SensRate: %u ms | Debounce: %u ms\n",
-                  config.pulsesPerRevolution, config.sensorUpdateRate, config.sensorDebounceBase);
+    DEBUG_PRINTF("  PPR: [%u,%u,%u,%u] | TO: [%u,%u,%u,%u] | SensRate: %u ms | Debounce: %u ms\n",
+                  config.pulsesPerRevolution[0], config.pulsesPerRevolution[1], config.pulsesPerRevolution[2], config.pulsesPerRevolution[3],
+                  config.sensorTimeout[0], config.sensorTimeout[1], config.sensorTimeout[2], config.sensorTimeout[3],
+                  config.sensorUpdateRate, config.sensorDebounceBase);
     DEBUG_PRINTF("  JSON Rate: %u ms | Inv Rate: %u ms\n", config.jsonUpdateRate, config.inverterUpdateRate);
     DEBUG_PRINTF("  Rede: %s | SSID: %s | IP: %s\n",
                   config.useAP ? "AP" : "STA", config.ssid, config.localIp);
@@ -85,7 +92,12 @@ void ConfigManager::save()
 
     prefs.putString("op_pin",    config.operatorPin);
     prefs.putString("adm_pin",   config.adminPin);
-    prefs.putUShort("ppr",       config.pulsesPerRevolution);
+    for (int i = 0; i < 4; i++) {
+        String pprKey = "ppr" + String(i + 1);
+        String toKey = "to" + String(i + 1);
+        prefs.putUShort(pprKey.c_str(), config.pulsesPerRevolution[i]);
+        prefs.putULong(toKey.c_str(),   config.sensorTimeout[i]);
+    }
     prefs.putUShort("sens_rate", config.sensorUpdateRate);
     prefs.putUShort("sens_deb",  config.sensorDebounceBase);
     prefs.putBool("sim_sens",    config.sensorSimEnabled);
@@ -132,7 +144,12 @@ void ConfigManager::toJson(JsonDocument &doc, bool includePins) const
     }
 
     // Sensores
-    doc["pulsesPerRevolution"] = config.pulsesPerRevolution;
+    for (int i = 0; i < 4; i++) {
+        String pprKey = "ppr" + String(i + 1);
+        String toKey = "timeout" + String(i + 1);
+        doc[pprKey] = config.pulsesPerRevolution[i];
+        doc[toKey]  = config.sensorTimeout[i];
+    }
     doc["sensorUpdateRate"]    = config.sensorUpdateRate;
     doc["sensorDebounceBase"]  = config.sensorDebounceBase;
     doc["sensorSimEnabled"]    = config.sensorSimEnabled;
@@ -172,8 +189,14 @@ bool ConfigManager::fromJson(JsonVariant &json)
         strlcpy(config.adminPin, obj["adminPin"] | config.adminPin, sizeof(config.adminPin));
 
     // --- Sensores ---
-    if (obj.containsKey("pulsesPerRevolution"))
-        config.pulsesPerRevolution = obj["pulsesPerRevolution"] | config.pulsesPerRevolution;
+    for (int i = 0; i < 4; i++) {
+        String pprKey = "ppr" + String(i + 1);
+        String toKey = "timeout" + String(i + 1);
+        if (obj.containsKey(pprKey))
+            config.pulsesPerRevolution[i] = obj[pprKey] | config.pulsesPerRevolution[i];
+        if (obj.containsKey(toKey))
+            config.sensorTimeout[i] = obj[toKey] | config.sensorTimeout[i];
+    }
     if (obj.containsKey("sensorUpdateRate"))
         config.sensorUpdateRate = obj["sensorUpdateRate"] | config.sensorUpdateRate;
     if (obj.containsKey("sensorDebounceBase"))

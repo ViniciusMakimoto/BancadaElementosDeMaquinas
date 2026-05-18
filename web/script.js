@@ -184,6 +184,8 @@ function navigateToPage(event) {
 function fetchData() {
     const statusIndicator = document.getElementById('status-indicator');
     const statusText = document.getElementById('status-text');
+    let lastCommTime = Date.now();
+    let disconnectPopupShown = false;
 
     setInterval(async () => {
         try {
@@ -192,6 +194,13 @@ function fetchData() {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const data = await response.json();
+
+            // Reset disconnect tracking
+            lastCommTime = Date.now();
+            if (disconnectPopupShown) {
+                closeDisconnectModal();
+                disconnectPopupShown = false;
+            }
 
             // Atualiza UI e status de conexão OK
             updateInterface(data);
@@ -204,6 +213,12 @@ function fetchData() {
             // Atualiza status de conexão para ERRO
             statusIndicator.className = 'status-error';
             statusText.textContent = 'Erro de Conexão';
+
+            // Check if 10 seconds have passed without communication
+            if (Date.now() - lastCommTime > 10000 && !disconnectPopupShown) {
+                showDisconnectModal();
+                disconnectPopupShown = true;
+            }
         }
     }, REQUEST_RATE);
 }
@@ -254,10 +269,10 @@ async function sendInverterCommand(state) {
 
 function updateInterface(data) {
     // --- RPMs ---
-    document.getElementById('rpm1').innerText = (data.rpm1 || 0) + " RPM";
-    document.getElementById('rpm2').innerText = (data.rpm2 || 0) + " RPM";
-    document.getElementById('rpm3').innerText = (data.rpm3 || 0) + " RPM";
-    document.getElementById('rpm4').innerText = (data.rpm4 || 0) + " RPM";
+    document.getElementById('rpm1').innerText = (data.rpm1 || "--") + " RPM";
+    document.getElementById('rpm2').innerText = (data.rpm2 || "--") + " RPM";
+    document.getElementById('rpm3').innerText = (data.rpm3 || "--") + " RPM";
+    document.getElementById('rpm4').innerText = (data.rpm4 || "--") + " RPM";
 
     // --- Inversor ---
     const invStatusEl = document.getElementById('invStatus');
@@ -301,6 +316,10 @@ function closeModal() {
     document.getElementById('loginModal').style.display = 'none';
     document.getElementById('pinInput').value = '';
     document.getElementById('pinError').style.display = 'none';
+}
+
+function closeIntroModal() {
+    document.getElementById('introModal').style.display = 'none';
 }
 
 async function checkAuth() {
@@ -439,7 +458,8 @@ async function loadConfig() {
         const mockCfg = {
             operatorPin: '0000',
             adminPin: '9999',
-            pulsesPerRevolution: 2,
+            ppr1: 1, ppr2: 1, ppr3: 1, ppr4: 1,
+            timeout1: 4000, timeout2: 4000, timeout3: 4000, timeout4: 4000,
             sensorUpdateRate: 1000,
             sensorDebounceBase: 15,
             sensorSimEnabled: false,
@@ -490,7 +510,10 @@ function populateConfigForm(cfg) {
     set('cfg-adm-pin', '');
 
     // Sensores
-    set('cfg-ppr', cfg.pulsesPerRevolution);
+    for (let i = 1; i <= 4; i++) {
+        set('cfg-ppr' + i, cfg['ppr' + i]);
+        set('cfg-to' + i, cfg['timeout' + i]);
+    }
     set('cfg-sens-rate', cfg.sensorUpdateRate);
     set('cfg-sens-deb', cfg.sensorDebounceBase);
     set('cfg-sim-sens', cfg.sensorSimEnabled);
@@ -530,7 +553,14 @@ async function saveConfig() {
 
     // Monta objeto de configuração (só inclui PINs se foram preenchidos)
     const config = {
-        pulsesPerRevolution: getInt('cfg-ppr'),
+        ppr1: getInt('cfg-ppr1'),
+        ppr2: getInt('cfg-ppr2'),
+        ppr3: getInt('cfg-ppr3'),
+        ppr4: getInt('cfg-ppr4'),
+        timeout1: getInt('cfg-to1'),
+        timeout2: getInt('cfg-to2'),
+        timeout3: getInt('cfg-to3'),
+        timeout4: getInt('cfg-to4'),
         sensorUpdateRate: getInt('cfg-sens-rate'),
         sensorDebounceBase: getInt('cfg-sens-deb'),
         sensorSimEnabled: getBool('cfg-sim-sens'),
@@ -587,10 +617,11 @@ async function saveConfig() {
 
         if (data.restart_required) {
             document.getElementById('network-change-banner').style.display = 'flex';
-            document.getElementById('restartModal').style.display = 'flex';
         } else {
             document.getElementById('network-change-banner').style.display = 'none';
         }
+        // Sempre sugere reiniciar após qualquer alteração
+        document.getElementById('restartModal').style.display = 'flex';
 
     } catch (err) {
         statusEl.textContent = `❌ Falha: ${err.message}`;
@@ -623,6 +654,9 @@ async function restartEsp() {
         // Informa o usuário que vai perder conexão
         document.getElementById('configSaveStatus').textContent = '🔄 Reiniciando... reconecte em alguns segundos.';
         document.getElementById('configSaveStatus').className = 'config-save-status status-warn';
+
+        // Recarrega a página automaticamente após 3 segundos para reestabelecer conexão
+        setTimeout(() => window.location.reload(), 3000);
     } catch (err) {
         console.error('[SYS] Erro ao reiniciar:', err);
     }
@@ -630,6 +664,14 @@ async function restartEsp() {
 
 function closeRestartModal() {
     document.getElementById('restartModal').style.display = 'none';
+}
+
+function showDisconnectModal() {
+    document.getElementById('disconnectModal').style.display = 'flex';
+}
+
+function closeDisconnectModal() {
+    document.getElementById('disconnectModal').style.display = 'none';
 }
 
 /**
@@ -1101,16 +1143,16 @@ function updateChart(data) {
     rpmChart.data.datasets.forEach(dataset => {
         switch (dataset.label) {
             case 'Motor RPM':
-                dataset.data.push(data.rpm1 || 0);
+                dataset.data.push(data.rpm1 ? data.rpm1 : null);
                 break;
             case 'Eixo 2 RPM':
-                dataset.data.push(data.rpm2 || 0);
+                dataset.data.push(data.rpm2 ? data.rpm2 : null);
                 break;
             case 'Eixo 3 RPM':
-                dataset.data.push(data.rpm3 || 0);
+                dataset.data.push(data.rpm3 ? data.rpm3 : null);
                 break;
             case 'Eixo 4 RPM':
-                dataset.data.push(data.rpm4 || 0);
+                dataset.data.push(data.rpm4 ? data.rpm4 : null);
                 break;
             case 'Frequência (Hz)':
                 dataset.data.push(data.inverterFrequency || 0);
@@ -1127,7 +1169,7 @@ function updateChart(data) {
     // --- LÓGICA DE AUTO-SCALE DO EIXO Y (RPMs) ---
     // 1. Filtra apenas os datasets de RPM (que usam o eixo 'y')
     const rpmDatasets = rpmChart.data.datasets.filter(ds => ds.yAxisID === 'y');
-    const allDataPoints = rpmDatasets.flatMap(dataset => dataset.data);
+    const allDataPoints = rpmDatasets.flatMap(dataset => dataset.data).filter(val => val !== null);
 
     if (allDataPoints.length > 0) {
         const minValue = Math.min(...allDataPoints);

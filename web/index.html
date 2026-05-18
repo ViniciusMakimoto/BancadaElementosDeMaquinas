@@ -39,19 +39,19 @@
             </div>
             <div class="card">
                 <h3>Eixo 1</h3>
-                <p id="rpm1">0 RPM</p>
+                <p id="rpm1">-- RPM</p>
             </div>
             <div class="card">
                 <h3>Eixo 2</h3>
-                <p id="rpm2">0 RPM</p>
+                <p id="rpm2">-- RPM</p>
             </div>
             <div class="card">
                 <h3>Eixo 3</h3>
-                <p id="rpm3">0 RPM</p>
+                <p id="rpm3">-- RPM</p>
             </div>
             <div class="card">
                 <h3>Eixo 4</h3>
-                <p id="rpm4">0 RPM</p>
+                <p id="rpm4">-- RPM</p>
             </div>
         </section>
     </main>
@@ -459,10 +459,49 @@
                     <span class="config-group-arrow">▼</span>
                 </div>
                 <div class="config-group-body">
+                    <!-- Eixo 1 -->
                     <div class="config-row">
-                        <label for="cfg-ppr">Pulsos por Revolução</label>
-                        <input type="number" id="cfg-ppr" min="1" max="100" step="1">
+                        <label for="cfg-ppr1">Eixo 1 - PPR</label>
+                        <input type="number" id="cfg-ppr1" min="1" max="100" step="1">
                         <span class="cfg-hint">pulsos/rev</span>
+                    </div>
+                    <div class="config-row">
+                        <label for="cfg-to1">Eixo 1 - Timeout Zero</label>
+                        <input type="number" id="cfg-to1" min="100" max="60000" step="100">
+                        <span class="cfg-hint">ms</span>
+                    </div>
+                    <!-- Eixo 2 -->
+                    <div class="config-row">
+                        <label for="cfg-ppr2">Eixo 2 - PPR</label>
+                        <input type="number" id="cfg-ppr2" min="1" max="100" step="1">
+                        <span class="cfg-hint">pulsos/rev</span>
+                    </div>
+                    <div class="config-row">
+                        <label for="cfg-to2">Eixo 2 - Timeout Zero</label>
+                        <input type="number" id="cfg-to2" min="100" max="60000" step="100">
+                        <span class="cfg-hint">ms</span>
+                    </div>
+                    <!-- Eixo 3 -->
+                    <div class="config-row">
+                        <label for="cfg-ppr3">Eixo 3 - PPR</label>
+                        <input type="number" id="cfg-ppr3" min="1" max="100" step="1">
+                        <span class="cfg-hint">pulsos/rev</span>
+                    </div>
+                    <div class="config-row">
+                        <label for="cfg-to3">Eixo 3 - Timeout Zero</label>
+                        <input type="number" id="cfg-to3" min="100" max="60000" step="100">
+                        <span class="cfg-hint">ms</span>
+                    </div>
+                    <!-- Eixo 4 -->
+                    <div class="config-row">
+                        <label for="cfg-ppr4">Eixo 4 - PPR</label>
+                        <input type="number" id="cfg-ppr4" min="1" max="100" step="1">
+                        <span class="cfg-hint">pulsos/rev</span>
+                    </div>
+                    <div class="config-row">
+                        <label for="cfg-to4">Eixo 4 - Timeout Zero</label>
+                        <input type="number" id="cfg-to4" min="100" max="60000" step="100">
+                        <span class="cfg-hint">ms</span>
                     </div>
                     <div class="config-row">
                         <label for="cfg-sens-rate">Taxa de Atualização</label>
@@ -584,6 +623,22 @@
         </form>
     </main>
 
+    <!-- Modal de Introdução e Segurança -->
+    <div id="introModal" class="modal" style="display: flex; z-index: 2000;">
+        <div class="modal-content" style="max-width: 500px; width: 90%;">
+            <img src="images/logo.png" alt="Logo do Projeto" style="max-height: 150px; margin: 0 auto 20px auto; display: block;">
+            <div class="modal-icon" style="font-size: 3.5rem; margin-bottom: 15px; color: var(--danger-color);">⚠️</div>
+            <h3 style="color: var(--danger-color); margin-top: 0; font-size: 1.6rem;">Aviso de Segurança</h3>
+            <p style="text-align: center; margin-bottom: 25px; font-size: 1.1rem; line-height: 1.6; color: var(--text-color);">
+                <strong>NÃO TOQUE NA BANCADA!</strong><br><br>
+                É estritamente proibido tocar nas partes móveis, eixos ou elementos de transmissão enquanto o sistema estiver energizado ou em funcionamento. Risco de acidentes.
+            </p>
+            <div class="modal-buttons">
+                <button onclick="closeIntroModal()" class="btn-on" style="width: 100%; padding: 15px; font-size: 1.1rem; background-color: var(--danger-color); color: white;">ESTOU CIENTE E CONCORDO</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de Login Unificado -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
@@ -603,12 +658,23 @@
     <div id="restartModal" class="modal">
         <div class="modal-content modal-warning">
             <div class="modal-icon">⚠️</div>
-            <h3>Reinicialização Necessária</h3>
-            <p>As configurações de rede foram alteradas e salvas. O ESP32 precisará ser reiniciado para aplicar as
-                mudanças.</p>
+            <h3>Reinicialização Recomendada</h3>
+            <p>As configurações foram salvas. É fortemente recomendado reiniciar o ESP32 para aplicar as mudanças de forma segura (obrigatório se a rede mudou).</p>
             <div class="modal-buttons">
                 <button class="btn-restart-confirm" onclick="restartEsp()">🔄 Reiniciar Agora</button>
                 <button onclick="closeRestartModal()" class="btn-cancel">Depois</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Desconexão -->
+    <div id="disconnectModal" class="modal">
+        <div class="modal-content modal-warning">
+            <div class="modal-icon">🔌</div>
+            <h3>Sem Comunicação</h3>
+            <p>O ESP32 não está respondendo há mais de 10 segundos. Verifique se o dispositivo está ligado e se a conexão Wi-Fi está ativa.</p>
+            <div class="modal-buttons">
+                <button onclick="closeDisconnectModal()" class="btn-cancel">Fechar</button>
             </div>
         </div>
     </div>

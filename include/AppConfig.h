@@ -15,9 +15,10 @@ struct AppConfig
     char adminPin[8];
 
     // --- Sensores ---
-    uint16_t pulsesPerRevolution;  // Pulsos por rotação
-    uint16_t sensorUpdateRate;     // ms entre cálculos de RPM
-    uint16_t sensorDebounceBase;   // ms de debounce (base, antes de /PPR)
+    uint16_t pulsesPerRevolution[4];  // Pulsos por rotação para cada sensor
+    uint32_t sensorTimeout[4];        // Tempo limite (ms) para considerar 0 RPM
+    uint16_t sensorUpdateRate;        // ms entre cálculos de RPM
+    uint16_t sensorDebounceBase;      // ms de debounce (base, antes de /PPR)
     bool     sensorSimEnabled;
 
     // --- API / JSON ---

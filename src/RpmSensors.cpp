@@ -52,8 +52,9 @@ void RpmSensors::update()
 
             for (int i = 0; i < 4; i++)
             {
-                // Se passou mais de 4 segundos desde a última interrupção, assumimos que o motor parou (0 RPM)
-                if (currentMicros - lastIntArray[i] > 4000000UL)
+                // Verifica o tempo limite específico do sensor para assumir que o motor parou (0 RPM)
+                unsigned long timeoutMicros = appConfigMgr.config.sensorTimeout[i] * 1000UL;
+                if (currentMicros - lastIntArray[i] > timeoutMicros)
                 {
                     sensorStates[i].rpm = 0.0;
                 }
@@ -61,7 +62,7 @@ void RpmSensors::update()
                 {
                     // Cálculo da frequência (Hz) = 1.000.000 / período (us)
                     float freqHz = 1000000.0 / periodArray[i];
-                    sensorStates[i].rpm = (freqHz / appConfigMgr.config.pulsesPerRevolution) * 60.0;
+                    sensorStates[i].rpm = (freqHz / appConfigMgr.config.pulsesPerRevolution[i]) * 60.0;
                 }
                 else
                 {

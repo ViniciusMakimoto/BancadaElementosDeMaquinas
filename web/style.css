@@ -273,7 +273,7 @@ input[type=range] {
 
 .modal-content {
     background: var(--card-bg);
-    padding: 0 25px 25px;
+    padding: 20px;
     border-radius: 10px;
     border: 1px solid var(--accent-color);
     text-align: center;
@@ -281,10 +281,10 @@ input[type=range] {
     max-width: 350px;
     display: flex;
     flex-direction: column;
-}
-
-.modal-content {
-    padding: 0 15px 15px;
+    box-sizing: border-box;
+    margin: 15px;
+    max-height: 95vh;
+    overflow-y: auto;
 }
 
 .modal-content h3 {
